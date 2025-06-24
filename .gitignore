@@ -1,5 +1,3 @@
 # Ignore IntelliJ/IDEA index files
 .idx/
 
-# Ignore VS Code workspace settings
-.vscode/
