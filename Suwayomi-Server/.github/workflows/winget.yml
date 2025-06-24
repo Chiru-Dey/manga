@@ -1,0 +1,15 @@
+name: Publish to WinGet
+on:
+  workflow_run:
+    workflows: ["CI Publish"]
+    types:
+      - completed
+jobs:
+  publish:
+    runs-on: windows-latest # action can only be run on windows
+    steps:
+      - uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: Suwayomi.Tachidesk-Server
+          installers-regex: '.*x64.msi$'
+          token: ${{ secrets.WINGET_PUBLISH_PAT }}
