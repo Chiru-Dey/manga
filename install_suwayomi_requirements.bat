@@ -23,14 +23,14 @@ if %errorlevel% ne 0 (
     echo Chocolatey is already installed.
 )
 
-:: --- Install JDK 21+ ---
+:: --- Install JDK 11+ ---
 echo.
-echo Checking for Java Development Kit (JDK) 21 or higher...
-choco install -y openjdk --version=21
+echo Checking for Java Development Kit (JDK) 11 or higher...
+choco install -y openjdk --version=11
 if %errorlevel% ne 0 (
-    echo Error: Failed to install OpenJDK 21. Please check Chocolatey logs or install manually.
+    echo Error: Failed to install OpenJDK 11. Please check Chocolatey logs or install manually.
 ) else (
-    echo OpenJDK 21 installed successfully.
+    echo OpenJDK 11 installed successfully.
 )
 
 :: --- Install Node.js 20+ (LTS) ---
@@ -61,7 +61,7 @@ if %errorlevel% ne 0 (
 
 echo.
 echo --- Prerequisite installation complete. ---
-echo Please verify that JDK 21+ and Node.js 20+ (with Yarn) are correctly installed.
+echo Please verify that JDK 11+ and Node.js 20+ (with Yarn) are correctly installed.
 echo You might need to restart your command prompt for changes to take effect.
 
 endlocal

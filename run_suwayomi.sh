@@ -9,6 +9,28 @@ CUSTOM_DATA_ROOT="$(pwd)/suwayomi-data"
 CUSTOM_WEBUI_TARGET_DIR="$CUSTOM_DATA_ROOT/webUI"
 SERVER_CONF_FILE="$CUSTOM_DATA_ROOT/server.conf"
 
+# --- Set JAVA_HOME to JDK 11 if available ---
+echo "Attempting to set JAVA_HOME to JDK 11..."
+JAVA_11_HOME=""
+
+# Common paths for JDK 11 on Linux/macOS
+if [ -d "/usr/lib/jvm/java-11-openjdk-amd64" ]; then
+    JAVA_11_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
+elif [ -d "/usr/local/opt/openjdk@11/libexec/openjdk.jdk" ]; then
+    JAVA_11_HOME="/usr/local/opt/openjdk@11/libexec/openjdk.jdk"
+elif [ -d "/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home" ]; then
+    JAVA_11_HOME="/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home"
+fi
+
+if [ -n "$JAVA_11_HOME" ]; then
+    export JAVA_HOME="$JAVA_11_HOME"
+    export PATH="$JAVA_HOME/bin:$PATH"
+    echo "JAVA_HOME set to: $JAVA_HOME"
+else
+    echo "Warning: JDK 11 not found in common locations. Attempting to use default Java. Build might fail if default is incompatible."
+    echo "Please ensure JDK 11 is installed and accessible, or set JAVA_HOME manually before running this script."
+fi
+
 # --- Kill previous server process (if any) ---
 echo "Attempting to kill any running Suwayomi-Server processes..."
 # This command attempts to kill processes whose command line contains "Suwayomi-Server".

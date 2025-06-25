@@ -10,6 +10,24 @@ set "CUSTOM_DATA_ROOT=%CD%\suwayomi-data"
 set "CUSTOM_WEBUI_TARGET_DIR=%CUSTOM_DATA_ROOT%\webUI"
 set "SERVER_CONF_FILE=%CUSTOM_DATA_ROOT%\server.conf"
 
+:: --- Set JAVA_HOME to JDK 11 if available ---
+echo Attempting to set JAVA_HOME to JDK 11...
+set "JAVA_11_HOME="
+
+:: Common paths for JDK 11 on Windows (adjust as needed for your specific installation)
+if exist "C:\Program Files\Java\jdk-11" set "JAVA_11_HOME=C:\Program Files\Java\jdk-11"
+if exist "C:\Program Files\Eclipse Adoptium\jdk-11.0.X.Y-hotspot" set "JAVA_11_HOME=C:\Program Files\Eclipse Adoptium\jdk-11.0.X.Y-hotspot"
+:: Add more common paths if necessary, e.g., for other distributions like Amazon Corretto, Oracle, etc.
+
+if defined JAVA_11_HOME (
+    set "JAVA_HOME=%JAVA_11_HOME%"
+    set "PATH=%JAVA_HOME%\bin;%PATH%"
+    echo JAVA_HOME set to: %JAVA_HOME%
+) else (
+    echo Warning: JDK 11 not found in common locations. Attempting to use default Java. Build might fail if default is incompatible.
+    echo Please ensure JDK 11 is installed and accessible, or set JAVA_HOME manually before running this script.
+)
+
 :: --- Kill previous server process (if any) ---
 echo Attempting to kill any running Suwayomi-Server processes...
 :: This is a best-effort attempt. It tries to find Java processes that have "Suwayomi-Server" in their command line.
