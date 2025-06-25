@@ -19,14 +19,14 @@ echo "Stopping any lingering Gradle daemons to ensure correct JDK is used..."
 # Define component paths (assuming they are built)
 # Use a wildcard for the server JAR version
 SERVER_JAR_GLOB="$SUWAYOMI_SERVER_ROOT_DIR/server/build/Suwayomi-Server-*.jar"
-LAUNCHER_JAR_PATH="$SUWAYOMI_LAUNCHER_ROOT_DIR/build/Suwayomi-Launcher.jar"
+LAUNCHER_JAR_PATH="$SUWAYOMI_LAUNCHER_ROOT_DIR/build/Suwayomi-Launcher-1.0.0.jar"
 
 # Server configuration
 SERVER_PORT=4567
 WEBUI_URL="http://127.0.0.1:$SERVER_PORT"
 PID_FILE="$SUWAYOMI_LAUNCHER_ROOT_DIR/server.pid" # File to store server PID
 SERVER_READINESS_ENDPOINT="$WEBUI_URL/api/v1/settings/about/"
-SERVER_STARTUP_TIMEOUT=60 # seconds
+SERVER_STARTUP_TIMEOUT=120 # seconds (2 minutes as requested)
 
 echo "Starting Suwayomi Server and WebUI..."
 
@@ -163,15 +163,15 @@ echo "Starting Suwayomi server via launcher..."
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     # Windows (Git Bash)
     # Using start /B to run in background without new window, output redirected to NUL
-    start /B "" "$JAVA_CMD" -jar "$LAUNCHER_JAR_PATH" --launch >/dev/null 2>&1
+    start /B "" "$JAVA_CMD" -jar "$LAUNCHER_JAR_PATH" --launch >"$SUWAYOMI_SERVER_ROOT_DIR/server.log" 2>&1
     echo "Suwayomi server started in background (Windows)."
     # Note: Getting PID for background processes started with 'start' is complex in Git Bash.
     # Relying on port check for readiness.
 else
     # Linux/Ubuntu/NixOS
-    nohup "$JAVA_CMD" -jar "$LAUNCHER_JAR_PATH" --launch >/dev/null 2>&1 &
+    nohup "$JAVA_CMD" -jar "$LAUNCHER_JAR_PATH" --launch >"$SUWAYOMI_SERVER_ROOT_DIR/server.log" 2>&1 &
     echo $! > "$PID_FILE" # Save PID to file
-    echo "Suwayomi server started in background (Linux/Unix). PID saved to $PID_FILE"
+    echo "Suwayomi server started in background (Linux/Unix). PID saved to $PID_FILE. Server output redirected to $SUWAYOMI_SERVER_ROOT_DIR/server.log"
 fi
 
 # --- 5. Wait for Server to Load ---
