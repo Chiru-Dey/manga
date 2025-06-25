@@ -49,7 +49,3 @@ dependencies {
     implementation(libs.bundles.twelvemonkeys)
     implementation(libs.sejda.webp)
 }
-
-kotlin {
-    jvmToolchain(21)
-}

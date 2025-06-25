@@ -1,5 +1,4 @@
 import de.undercouch.gradle.tasks.download.Download
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import java.time.Instant
 
@@ -164,7 +163,6 @@ tasks {
 
     withType<KotlinJvmCompile> {
         compilerOptions {
-            jvmTarget = JvmTarget.JVM_21
             freeCompilerArgs.add(
                 "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
             )

@@ -8,33 +8,13 @@
 
 import { MetaType } from '@/lib/graphql/generated/graphql.ts';
 import { AllowedMetadataValueTypes, AppMetadataKeys, Metadata } from '@/modules/metadata/Metadata.types.ts';
-import { APP_METADATA_KEY_TO_TYPE } from '@/modules/metadata/Metadata.constants.ts';
+import { APP_METADATA } from '@/modules/metadata/Metadata.constants.ts';
 
 export const convertValueFromMetadata = <T extends AllowedMetadataValueTypes = AllowedMetadataValueTypes>(
     key: string,
     value: string,
-): T => {
-    const typeOfKey = APP_METADATA_KEY_TO_TYPE[key as AppMetadataKeys];
-    const isAutoType = typeOfKey === 'auto';
-
-    if ((isAutoType && !Number.isNaN(+value)) || typeOfKey === 'number') {
-        return +value as T;
-    }
-
-    if ((isAutoType && (value === 'true' || value === 'false')) || typeOfKey === 'boolean') {
-        return (value === 'true') as T;
-    }
-
-    if (isAutoType && value === 'undefined') {
-        return undefined as T;
-    }
-
-    if (isAutoType && value === 'null') {
-        return null as T;
-    }
-
-    return value as T;
-};
+    defaultValue: any,
+): T => APP_METADATA[key as AppMetadataKeys].convert(value, defaultValue);
 
 export const convertFromGqlMeta = (
     gqlMetadata?: MetaType[],
