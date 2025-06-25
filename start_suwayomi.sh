@@ -7,6 +7,15 @@ SUWAYOMI_SERVER_ROOT_DIR="/workspaces/manga/Suwayomi-Server"
 SUWAYOMI_LAUNCHER_ROOT_DIR="/workspaces/manga/Suwayomi-Launcher"
 SUWAYOMI_WEBUI_ROOT_DIR="/workspaces/manga/Suwayomi-WebUI"
 
+# Set JAVA_HOME for Gradle to use JDK 21
+export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+echo "Stopping any lingering Gradle daemons to ensure correct JDK is used..."
+# Stop any existing Gradle daemons to ensure a fresh start with JDK 21
+(cd "$SUWAYOMI_SERVER_ROOT_DIR" && ./gradlew --stop) >/dev/null 2>&1
+(cd "$SUWAYOMI_LAUNCHER_ROOT_DIR" && ./gradlew --stop) >/dev/null 2>&1
+
 # Define component paths (assuming they are built)
 # Use a wildcard for the server JAR version
 SERVER_JAR_GLOB="$SUWAYOMI_SERVER_ROOT_DIR/server/build/Suwayomi-Server-*.jar"
@@ -27,21 +36,21 @@ echo "Checking if Suwayomi components are built..."
 # Build Suwayomi-Server
 if [ ! -f "$SERVER_JAR_GLOB" ]; then
     echo "Suwayomi-Server JAR not found. Building now..."
-    (cd "$SUWAYOMI_SERVER_ROOT_DIR" && ./gradlew shadowJar) || { echo "Error: Failed to build Suwayomi-Server. Exiting."; exit 1; }
+    (cd "$SUWAYOMI_SERVER_ROOT_DIR" && ./gradlew shadowJar --info) || { echo "Error: Failed to build Suwayomi-Server. Exiting."; exit 1; }
     echo "Suwayomi-Server built successfully."
 fi
 
 # Build Suwayomi-Launcher
 if [ ! -f "$LAUNCHER_JAR_PATH" ]; then
     echo "Suwayomi-Launcher JAR not found. Building now..."
-    (cd "$SUWAYOMI_LAUNCHER_ROOT_DIR" && ./gradlew shadowJar) || { echo "Error: Failed to build Suwayomi-Launcher. Exiting."; exit 1; }
+    (cd "$SUWAYOMI_LAUNCHER_ROOT_DIR" && ./gradlew shadowJar --info) || { echo "Error: Failed to build Suwayomi-Launcher. Exiting."; exit 1; }
     echo "Suwayomi-Launcher built successfully."
 fi
 
 # Build Suwayomi-WebUI
 if [ ! -d "$SUWAYOMI_WEBUI_ROOT_DIR/build" ]; then
     echo "Suwayomi-WebUI build directory not found. Building now..."
-    (cd "$SUWAYOMI_WEBUI_ROOT_DIR" && npm install && npm run build) || { echo "Error: Failed to build Suwayomi-WebUI. Exiting."; exit 1; }
+    (cd "$SUWAYOMI_WEBUI_ROOT_DIR" && npm install --legacy-peer-deps && npm run build) || { echo "Error: Failed to build Suwayomi-WebUI. Exiting."; exit 1; }
     echo "Suwayomi-WebUI built successfully."
 fi
 
