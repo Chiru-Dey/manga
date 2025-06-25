@@ -11,25 +11,49 @@ SERVER_CONF_FILE="$CUSTOM_DATA_ROOT/server.conf"
 
 # --- Set JAVA_HOME to JDK 11 if available ---
 echo "Attempting to set JAVA_HOME to JDK 11..."
-JAVA_11_HOME=""
+JAVA_HOME_CANDIDATE=""
 
-# Common paths for JDK 11 on Linux/macOS
-if [ -d "/usr/lib/jvm/java-11-openjdk-amd64" ]; then
-    JAVA_11_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
-elif [ -d "/usr/local/opt/openjdk@11/libexec/openjdk.jdk" ]; then
-    JAVA_11_HOME="/usr/local/opt/openjdk@11/libexec/openjdk.jdk"
-elif [ -d "/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home" ]; then
-    JAVA_11_HOME="/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home"
+# Try to find java executable in PATH and derive JAVA_HOME
+JAVA_BIN=$(which java 2>/dev/null)
+if [ -n "$JAVA_BIN" ]; then
+    # Resolve symlinks to get the real path
+    JAVA_REAL_PATH=$(readlink -f "$JAVA_BIN")
+    # JAVA_HOME is typically two levels up from the 'java' executable (e.g., /path/to/jdk/bin/java)
+    JAVA_HOME_CANDIDATE=$(dirname "$(dirname "$JAVA_REAL_PATH")")
+
+    # Verify if it's a JDK 11 or higher
+    if [ -f "$JAVA_HOME_CANDIDATE/bin/java" ]; then
+        JAVA_VERSION=$("$JAVA_HOME_CANDIDATE/bin/java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+        # Check for versions like "11.0.x", "12.x", "1.11.x", etc.
+        if [[ "$JAVA_VERSION" =~ ^1\.11\. ]] || [[ "$JAVA_VERSION" =~ ^11\. ]] || [[ "$JAVA_VERSION" =~ ^1[2-9]\. ]] || [[ "$JAVA_VERSION" =~ ^[2-9][0-9]\. ]]; then
+            export JAVA_HOME="$JAVA_HOME_CANDIDATE"
+            export PATH="$JAVA_HOME/bin:$PATH"
+            echo "JAVA_HOME set to: $JAVA_HOME (Detected version: $JAVA_VERSION)"
+        else
+            echo "Warning: Found Java version $JAVA_VERSION, but it's not JDK 11 or higher. Attempting to use default Java."
+        fi
+    fi
 fi
 
-if [ -n "$JAVA_11_HOME" ]; then
-    export JAVA_HOME="$JAVA_11_HOME"
-    export PATH="$JAVA_HOME/bin:$PATH"
-    echo "JAVA_HOME set to: $JAVA_HOME"
-else
-    echo "Warning: JDK 11 not found in common locations. Attempting to use default Java. Build might fail if default is incompatible."
-    echo "Please ensure JDK 11 is installed and accessible, or set JAVA_HOME manually before running this script."
+if [ -z "$JAVA_HOME" ]; then
+    # Fallback to common paths if dynamic detection failed or found incompatible version
+    if [ -d "/usr/lib/jvm/java-11-openjdk-amd64" ]; then
+        export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
+    elif [ -d "/usr/local/opt/openjdk@11/libexec/openjdk.jdk" ]; then
+        export JAVA_HOME="/usr/local/opt/openjdk@11/libexec/openjdk.jdk"
+    elif [ -d "/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home" ]; then
+        export JAVA_HOME="/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home"
+    fi
+
+    if [ -n "$JAVA_HOME" ]; then
+        export PATH="$JAVA_HOME/bin:$PATH"
+        echo "JAVA_HOME set to: $JAVA_HOME (from common paths fallback)"
+    else
+        echo "Warning: JDK 11 not found in common locations or via 'which java'. Attempting to use default Java. Build might fail if default is incompatible."
+        echo "Please ensure JDK 11 is installed and accessible, or set JAVA_HOME manually before running this script."
+    fi
 fi
+
 
 # --- Kill previous server process (if any) ---
 echo "Attempting to kill any running Suwayomi-Server processes..."
