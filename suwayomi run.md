@@ -51,6 +51,10 @@ To use your local `Suwayomi-WebUI` folder, you would typically:
     You need to find the exact system property that `ApplicationDirs` uses to determine the `webUIRoot`. While not explicitly in `ServerConfig.kt`, a common pattern for such a setup would be a property like `suwayomi.tachidesk.config.server.webUIRoot` or similar.
 
     Let's assume the property is `suwayomi.tachidesk.config.server.webUIRoot`. You would run the server like this:
+    ```bash
+    cd Suwayomi-Server && JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew shadowJar
+    ```
+
 
     ```bash
     cd Suwayomi-Server
