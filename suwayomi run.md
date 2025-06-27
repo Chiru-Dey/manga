@@ -42,7 +42,7 @@ To use your local `Suwayomi-WebUI` folder, you would typically:
     Navigate to the `Suwayomi-WebUI` directory and run:
     ```bash
     cd Suwayomi-WebUI
-    yarn build
+    nvm exec 22.12.0 yarn build
     # or npm run build
     ```
     This will create a `build` directory inside `Suwayomi-WebUI` containing the static files.
