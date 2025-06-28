@@ -164,6 +164,6 @@ echo Access the WebUI at: http://%SERVER_IP%:%SERVER_PORT%
 echo. :: Newline for readability
 
 :: Run the server, setting the data root and WebUI flavor via system properties
-java -Dsuwayomi.tachidesk.config.server.rootDir="%CUSTOM_DATA_ROOT%" -Dsuwayomi.tachidesk.config.server.webUIFlavor=CUSTOM -jar "%SERVER_JAR_PATH%"
+java -Dsuwayomi.tachidesk.config.server.rootDir="%CUSTOM_DATA_ROOT%" -Dsuwayomi.tachidesk.config.server.webUIFlavor=CUSTOM -Dsuwayomi.tachidesk.config.server.webUI.autoDownload=false -Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false -Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false -jar "%SERVER_JAR_PATH%"
 
 endlocal

@@ -26,7 +26,7 @@ if %errorlevel% ne 0 (
 :: --- Install JDK 11+ ---
 echo.
 echo Checking for Java Development Kit (JDK) 11 or higher...
-choco install -y openjdk --version=11
+choco install -y openjdk --version=21
 if %errorlevel% ne 0 (
     echo Error: Failed to install OpenJDK 11. Please check Chocolatey logs or install manually.
 ) else (
