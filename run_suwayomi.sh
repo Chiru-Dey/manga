@@ -52,25 +52,43 @@ echo "Suwayomi-Server JAR built: $SERVER_JAR_ABSOLUTE_PATH"
 cd - > /dev/null
 
 # --- Build Suwayomi-WebUI static files ---
-# Source NVM if available
-if [ -s "$HOME/.nvm/nvm.sh" ]; then
-  . "$HOME/.nvm/nvm.sh"
-  echo "NVM sourced."
-else
-  echo "Warning: NVM not found or nvm.sh script not accessible. Ensure NVM is installed and configured correctly."
-fi
-
 echo "Building Suwayomi-WebUI static files..."
 # Navigate to the WebUI directory
 cd "$SUWAYOMI_WEBUI_DIR" || { echo "Error: Suwayomi-WebUI directory not found! Exiting."; exit 1; }
+
+# Switch Node version
+# Source NVM if available
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+  echo "NVM sourced."
+  nvm use 22.12.0
+  if [ $? -ne 0 ]; then
+      echo "Error: Failed to switch Node.js version to 22.12.0 using NVM. Exiting."
+      exit 1
+  fi
+else
+  echo "Warning: NVM not found or nvm.sh script not accessible. Ensure NVM is installed and configured correctly."
+  echo "Attempting to proceed without NVM, but Node.js version might be incorrect."
+fi
+
 # Install Node.js dependencies
-nvm exec 22.12.0 yarn install
+yarn install
 if [ $? -ne 0 ]; then
     echo "Error: Suwayomi-WebUI yarn install failed! Exiting."
     exit 1
 fi
+
+# Verify vite is installed
+echo "Verifying vite installation..."
+npx vite --version
+if [ $? -ne 0 ]; then
+    echo "Warning: vite not found or not working. This might cause issues with the WebUI build."
+fi
+
 # Build the WebUI for production
-nvm exec 22.12.0 yarn build
+yarn build
 if [ $? -ne 0 ]; then
     echo "Error: Suwayomi-WebUI build failed! Exiting."
     exit 1

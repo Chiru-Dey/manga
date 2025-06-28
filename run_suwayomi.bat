@@ -78,13 +78,32 @@ if %errorlevel% ne 0 (
     echo Error: Suwayomi-WebUI directory not found! Exiting.
     exit /b 1
 )
-call nvm exec 22.12.0 yarn install
+
+:: Switch Node version
+call nvm use 22.12.0
+if %errorlevel% ne 0 (
+    echo Error: Failed to switch Node.js version to 22.12.0 using NVM. Exiting.
+    popd
+    exit /b 1
+)
+
+:: Install Node.js dependencies
+call yarn install
 if %errorlevel% ne 0 (
     echo Error: Suwayomi-WebUI yarn install failed! Exiting.
     popd
     exit /b 1
 )
-call nvm exec 22.12.0 yarn build
+
+:: Verify vite is installed
+echo Verifying vite installation...
+call npx vite --version
+if %errorlevel% ne 0 (
+    echo Warning: vite not found or not working. This might cause issues with the WebUI build.
+)
+
+:: Build the WebUI for production
+call yarn build
 if %errorlevel% ne 0 (
     echo Error: Suwayomi-WebUI build failed! Exiting.
     popd

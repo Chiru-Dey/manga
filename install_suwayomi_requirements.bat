@@ -33,15 +33,32 @@ if %errorlevel% ne 0 (
     echo OpenJDK 11 installed successfully.
 )
 
-:: --- Install Node.js 20+ (LTS) ---
+:: --- Install Node Version Manager (NVM for Windows) and Node.js 22.12.0 ---
 echo.
-echo Checking for Node.js 20 (LTS) or higher...
-choco install -y nodejs-lts
+echo Checking for Node Version Manager (NVM for Windows)...
+choco install -y nvm
 if %errorlevel% ne 0 (
-    echo Error: Failed to install Node.js LTS. Please check Chocolatey logs or install manually.
+    echo Error: Failed to install NVM for Windows. Please check Chocolatey logs or install manually.
+    goto :eof
 ) else (
-    echo Node.js LTS installed successfully.
+    echo NVM for Windows installed successfully.
 )
+
+echo.
+echo Installing Node.js version 22.12.0 using NVM...
+:: NVM for Windows commands are slightly different.
+:: 'nvm install' also sets it as default if it's the first install.
+nvm install 22.12.0
+if %errorlevel% ne 0 (
+    echo Error: Failed to install Node.js 22.12.0 using NVM.
+    goto :eof
+)
+nvm use 22.12.0
+if %errorlevel% ne 0 (
+    echo Error: Failed to use Node.js 22.12.0 using NVM.
+    goto :eof
+)
+echo Node.js 22.12.0 is now active.
 
 :: --- Install Yarn ---
 echo.
