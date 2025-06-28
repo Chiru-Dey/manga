@@ -47,6 +47,9 @@ if %errorlevel% ne 0 (
     echo Error: Suwayomi-Server directory not found! Exiting.
     exit /b 1
 )
+:: Clean previous builds and then run the Gradle shadowJar task to build the executable JAR
+del server\build\*.jar
+del server\build\libs\*.jar
 call gradlew.bat shadowJar
 if %errorlevel% ne 0 (
     echo Error: Suwayomi-Server build failed! Exiting.
@@ -75,13 +78,13 @@ if %errorlevel% ne 0 (
     echo Error: Suwayomi-WebUI directory not found! Exiting.
     exit /b 1
 )
-call yarn install
+call nvm exec 22.12.0 yarn install
 if %errorlevel% ne 0 (
     echo Error: Suwayomi-WebUI yarn install failed! Exiting.
     popd
     exit /b 1
 )
-call yarn build
+call nvm exec 22.12.0 yarn build
 if %errorlevel% ne 0 (
     echo Error: Suwayomi-WebUI build failed! Exiting.
     popd
