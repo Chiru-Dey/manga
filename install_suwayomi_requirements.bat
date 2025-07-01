@@ -25,12 +25,12 @@ if %errorlevel% ne 0 (
 
 :: --- Install JDK 11+ ---
 echo.
-echo Checking for Java Development Kit (JDK) 11 or higher...
+echo Checking for Java Development Kit (JDK) 21 or higher...
 choco install -y openjdk --version=21
 if %errorlevel% ne 0 (
     echo Error: Failed to install OpenJDK 11. Please check Chocolatey logs or install manually.
 ) else (
-    echo OpenJDK 11 installed successfully.
+    echo OpenJDK 21 installed successfully.
 )
 
 :: --- Install Node Version Manager (NVM for Windows) and Node.js 22.12.0 ---
