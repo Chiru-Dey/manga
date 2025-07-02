@@ -48,9 +48,13 @@ const convertToBoolean = (value: string): boolean => value === 'true';
 const convertToStringNullAndUndefined = (value: string) => convertToTypeNullAndUndefined(value, convertToString);
 const convertToBooleanNullAndUndefined = (value: string) => convertToTypeNullAndUndefined(value, convertToBoolean);
 const convertToObject = <T>(value: string, defaultValue: T): T => {
-    const convertedValue = jsonSaveParse(value) ?? defaultValue;
+    const convertedValue = jsonSaveParse<T>(value) ?? defaultValue;
 
-    if (Array.isArray(defaultValue)) {
+    if (Array.isArray(convertedValue)) {
+        return convertedValue;
+    }
+
+    if (defaultValue == null) {
         return convertedValue;
     }
 
@@ -78,7 +82,14 @@ export const APP_METADATA: Record<
     },
     downloadAheadLimit: {
         convert: convertToNumber,
-        toConstrainedValue: (value: number) => coerceIn(value, DOWNLOAD_AHEAD.min, DOWNLOAD_AHEAD.max),
+        toConstrainedValue: (value: number) => {
+            const isDisabled = value === 0;
+            if (isDisabled) {
+                return value;
+            }
+
+            return coerceIn(value, DOWNLOAD_AHEAD.min, DOWNLOAD_AHEAD.max);
+        },
     },
     showAddToLibraryCategorySelectDialog: {
         convert: convertToBoolean,
@@ -246,6 +257,9 @@ export const APP_METADATA: Record<
         }),
     },
     shouldSkipDupChapters: {
+        convert: convertToBoolean,
+    },
+    shouldSkipFilteredChapters: {
         convert: convertToBoolean,
     },
     isStaticNav: {
@@ -441,6 +455,7 @@ export const GLOBAL_METADATA_KEYS: AppMetadataKeys[] = [
     'exitMode',
     'customFilter',
     'shouldSkipDupChapters',
+    'shouldSkipFilteredChapters',
     'hotkeys',
     'shouldShowTransitionPage',
 
