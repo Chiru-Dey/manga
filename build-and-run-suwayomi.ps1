@@ -1,169 +1,153 @@
-@echo off
-setlocal enabledelayedexpansion
+# --- Automatically set execution policy for this process ---
+if ((Get-ExecutionPolicy -Scope Process) -ne "Bypass") {
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+}
 
-:: --- Configuration ---
-set "SUWAYOMI_SERVER_DIR=Suwayomi-Server"
-set "SUWAYOMI_WEBUI_DIR=Suwayomi-WebUI"
-:: This will be the new data root for the server. It will be created in the current directory.
-set "CUSTOM_DATA_ROOT=%CD%\suwayomi-data"
-:: The server expects the WebUI to be in a 'webUI' subdirectory of its data root.
-set "CUSTOM_WEBUI_TARGET_DIR=%CUSTOM_DATA_ROOT%\webUI"
-set "SERVER_CONF_FILE=%CUSTOM_DATA_ROOT%\server.conf"
+# --- Configuration ---
+$SUWAYOMI_SERVER_DIR = "Suwayomi-Server"
+$SUWAYOMI_WEBUI_DIR = "Suwayomi-WebUI"
+$CUSTOM_DATA_ROOT = Join-Path -Path (Get-Location) -ChildPath "suwayomi-data"
+$CUSTOM_WEBUI_TARGET_DIR = Join-Path -Path $CUSTOM_DATA_ROOT -ChildPath "webUI"
+$SERVER_CONF_FILE = Join-Path -Path $CUSTOM_DATA_ROOT -ChildPath "server.conf"
 
-:: --- Set JAVA_HOME for Suwayomi-Server build (using JDK 21) ---
-echo Attempting to set JAVA_HOME to JDK 21...
-set "JAVA_21_HOME="
+# --- Ensure Execution Policy ---
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 
-:: Common paths for JDK 21 on Windows (adjust as needed for your specific installation)
-if exist "C:\Program Files\Java\jdk-21" set "JAVA_21_HOME=C:\Program Files\Java\jdk-21"
-if exist "C:\Program Files\Eclipse Adoptium\jdk-21.0.X.Y-hotspot" set "JAVA_21_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.X.Y-hotspot"
-:: Add more common paths if necessary, e.g., for other distributions like Amazon Corretto, Oracle, etc.
+# --- Function: Check Java version ---
+function Find-JavaAndCheckVersion {
+    $requiredVersion = 21
+    $javaCmd = Get-Command java -ErrorAction SilentlyContinue
 
-if defined JAVA_21_HOME (
-    set "JAVA_HOME=%JAVA_21_HOME%"
-    set "PATH=%JAVA_HOME%\bin;%PATH%"
-    echo JAVA_HOME set to: %JAVA_21_HOME%
-) else (
-    echo Error: JDK 21 not found in common locations. Please ensure it's installed or update the script with the correct path.
-    exit /b 1
-)
+    if (-not $javaCmd) {
+        Write-Error "Java executable not found. Please ensure Java is installed and in your PATH."
+        exit 1
+    }
 
-:: --- Kill previous server process (if any) ---
-echo Attempting to kill any running Suwayomi-Server processes...
-:: This is a best-effort attempt. It tries to find Java processes that have "Suwayomi-Server" in their command line.
-:: This might not catch all instances or could be too broad if other Java apps use similar names.
-for /f "tokens=2" %%a in ('tasklist /nh /fi "imagename eq java.exe" /fo csv') do (
-    for /f "tokens=*" %%b in ('wmic process where "ProcessId=%%a" get CommandLine /value ^| findstr /i "Suwayomi-Server"') do (
-        echo Found process %%a: %%b
-        taskkill /PID %%a /F
-    )
-)
-timeout /t 2 /nobreak >nul :: Give it a moment to terminate
+    $javaVersionOutput = & java -version 2>&1
+    $versionLine = ($javaVersionOutput | Select-String -Pattern 'version').Line
+    if ($versionLine -match '"([\d._]+)"') {
+        $javaVersion = $matches[1]
+    } else {
+        Write-Error "Unable to parse Java version."
+        exit 1
+    }
 
-:: --- Build Suwayomi-Server JAR ---
-echo Building Suwayomi-Server JAR...
-pushd "%SUWAYOMI_SERVER_DIR%"
-if %errorlevel% ne 0 (
-    echo Error: Suwayomi-Server directory not found! Exiting.
-    exit /b 1
-)
-:: Clean previous builds and then run the Gradle shadowJar task to build the executable JAR
-del server\build\*.jar
-del server\build\libs\*.jar
-call gradlew.bat shadowJar
-if %errorlevel% ne 0 (
-    echo Error: Suwayomi-Server build failed! Exiting.
-    popd
-    exit /b 1
-)
-:: Find the generated JAR file path
-set "SERVER_JAR_PATH="
-for /f "delims=" %%i in ('dir /b /s server\build\libs\Suwayomi-Server-*.jar') do (
-    set "SERVER_JAR_PATH=%%i"
-    goto :found_server_jar
-)
-:found_server_jar
-if not defined SERVER_JAR_PATH (
-    echo Error: Suwayomi-Server JAR not found after build! Exiting.
-    popd
-    exit /b 1
-)
-echo Suwayomi-Server JAR built: %SERVER_JAR_PATH%
-popd
+    $majorVersion = ($javaVersion -split '\.')[0]
+    if ($majorVersion -eq "1") {
+        $majorVersion = ($javaVersion -split '\.')[1]
+    }
 
-:: --- Build Suwayomi-WebUI static files ---
-echo Building Suwayomi-WebUI static files...
-pushd "%SUWAYOMI_WEBUI_DIR%"
-if %errorlevel% ne 0 (
-    echo Error: Suwayomi-WebUI directory not found! Exiting.
-    exit /b 1
-)
+    Write-Output "Detected Java version: $javaVersion (Major: $majorVersion)"
 
-:: Switch Node version
-call nvm use 22.12.0
-if %errorlevel% ne 0 (
-    echo Error: Failed to switch Node.js version to 22.12.0 using NVM. Exiting.
-    popd
-    exit /b 1
-)
+    if ([int]$majorVersion -lt $requiredVersion) {
+        Write-Error "Suwayomi-Server requires Java $requiredVersion or higher."
+        exit 1
+    }
+    Write-Output "Java version OK."
+}
 
-:: Install Node.js dependencies
-call yarn install
-if %errorlevel% ne 0 (
-    echo Error: Suwayomi-WebUI yarn install failed! Exiting.
-    popd
-    exit /b 1
-)
+# --- Kill any running server processes ---
+Write-Output "Stopping any running Suwayomi-Server processes..."
+Get-Process java -ErrorAction SilentlyContinue | Where-Object {
+    $_.Path -and ($_.Path -match "Suwayomi-Server")
+} | Stop-Process -Force
 
-:: Verify vite is installed
-echo Verifying vite installation...
-call npx vite --version
-if %errorlevel% ne 0 (
-    echo Warning: vite not found or not working. This might cause issues with the WebUI build.
-)
+# --- Check Java ---
+Find-JavaAndCheckVersion
 
-:: Build the WebUI for production
-call yarn build
-if %errorlevel% ne 0 (
-    echo Error: Suwayomi-WebUI build failed! Exiting.
-    popd
-    exit /b 1
-)
-:: Get the absolute path of the built WebUI directory
-set "WEBUI_BUILD_DIR=%CD%\build"
-echo Suwayomi-WebUI built: %WEBUI_BUILD_DIR%
-popd
+# --- Build Suwayomi-Server ---
+Write-Output "Building Suwayomi-Server..."
+Push-Location $SUWAYOMI_SERVER_DIR
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "server\build"
 
-:: --- Prepare custom data directory and copy WebUI ---
-echo Preparing custom data directory: %CUSTOM_DATA_ROOT%
-:: Clean up previous custom data directory if it exists
-if exist "%CUSTOM_DATA_ROOT%" rmdir /s /q "%CUSTOM_DATA_ROOT%"
-:: Create the target directory structure
-mkdir "%CUSTOM_WEBUI_TARGET_DIR%"
-if %errorlevel% ne 0 (
-    echo Error: Failed to create custom WebUI target directory! Exiting.
-    exit /b 1
-)
-:: Copy the contents of the built WebUI into the target directory
-xcopy "%WEBUI_BUILD_DIR%" "%CUSTOM_WEBUI_TARGET_DIR%" /E /I /Y
-if %errorlevel% ne 0 (
-    echo Error: Failed to copy WebUI files to custom data directory! Exiting.
-    exit /b 1
-)
-echo WebUI files copied to %CUSTOM_WEBUI_TARGET_DIR%
+& .\gradlew.bat shadowJar
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Suwayomi-Server build failed!"
+    exit 1
+}
 
-:: --- Determine WebUI Access Link ---
-set "SERVER_IP=localhost"
-set "SERVER_PORT=8080"
+$serverJar = Get-ChildItem -Path "server\build" -Filter "Suwayomi-Server-*.jar" -Recurse | Select-Object -First 1
+if (-not $serverJar) {
+    Write-Error "Suwayomi-Server JAR not found!"
+    exit 1
+}
+$SERVER_JAR_ABSOLUTE_PATH = $serverJar.FullName
+Write-Output "Suwayomi-Server JAR built: $SERVER_JAR_ABSOLUTE_PATH"
+Pop-Location
 
-if exist "%SERVER_CONF_FILE%" (
-    for /f "tokens=1,2,3 delims==" %%i in ('findstr /b /c:"ip =" "%SERVER_CONF_FILE%"') do (
-        set "TEMP_IP=%%k"
-        set "TEMP_IP=!TEMP_IP: =!"
-        set "TEMP_IP=!TEMP_IP:"=!"
-        if not "!TEMP_IP!"=="" (
-            if "!TEMP_IP!"=="0.0.0.0" (
-                set "SERVER_IP=localhost"
-            ) else (
-                set "SERVER_IP=!TEMP_IP!"
-            )
-        )
-    )
-    for /f "tokens=1,2,3 delims==" %%i in ('findstr /b /c:"port =" "%SERVER_CONF_FILE%"') do (
-        set "TEMP_PORT=%%k"
-        set "TEMP_PORT=!TEMP_PORT: =!"
-        if not "!TEMP_PORT!"=="" set "SERVER_PORT=!TEMP_PORT!"
-    )
-)
+# --- Build Suwayomi-WebUI ---
+Write-Output "Building Suwayomi-WebUI..."
+Push-Location $SUWAYOMI_WEBUI_DIR
 
-:: --- Run Suwayomi-Server with custom WebUI path ---
-echo Starting Suwayomi-Server with local WebUI...
-echo Server Data Root: %CUSTOM_DATA_ROOT%
-echo WebUI Flavor: CUSTOM (server will use local files)
-echo Access the WebUI at: http://%SERVER_IP%:%SERVER_PORT%
-echo. :: Newline for readability
+# Ensure the correct Node version
+$nvmPath = "$env:APPDATA\nvm\nvm.exe"
+if (Test-Path $nvmPath) {
+    & $nvmPath use 22.12.0
+} else {
+    Write-Warning "nvm not found. Make sure Node.js 22.12.0 is active."
+}
 
-:: Run the server, setting the data root and WebUI flavor via system properties
-java -Dsuwayomi.tachidesk.config.server.rootDir="%CUSTOM_DATA_ROOT%" -Dsuwayomi.tachidesk.config.server.webUIFlavor=CUSTOM -Dsuwayomi.tachidesk.config.server.webUI.autoDownload=false -Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false -Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false -jar "%SERVER_JAR_PATH%"
+# Install dependencies
+yarn install
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "yarn install failed!"
+    exit 1
+}
 
-endlocal
+# Verify vite
+npx vite --version
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "vite not found or broken."
+}
+
+# Build WebUI
+yarn build
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Suwayomi-WebUI build failed!"
+    exit 1
+}
+
+$WEBUI_BUILD_DIR = Join-Path (Get-Location) "build"
+Write-Output "Suwayomi-WebUI built: $WEBUI_BUILD_DIR"
+Pop-Location
+
+# --- Prepare data directory ---
+Write-Output "Preparing custom data directory..."
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $CUSTOM_DATA_ROOT
+New-Item -ItemType Directory -Path $CUSTOM_WEBUI_TARGET_DIR -Force | Out-Null
+Copy-Item -Recurse -Force "$WEBUI_BUILD_DIR\*" "$CUSTOM_WEBUI_TARGET_DIR\"
+Write-Output "WebUI copied to: $CUSTOM_WEBUI_TARGET_DIR"
+
+# --- Determine WebUI access URL ---
+$SERVER_IP = "localhost"
+$SERVER_PORT = "8080"
+if (Test-Path $SERVER_CONF_FILE) {
+    $conf = Get-Content $SERVER_CONF_FILE
+    if (($conf | Select-String 'ip\s*=').Line -match '"(.*?)"') {
+        $ipVal = $matches[1]
+        if ($ipVal -eq "0.0.0.0") {
+            $SERVER_IP = "localhost"
+        } else {
+            $SERVER_IP = $ipVal
+        }
+    }
+    if (($conf | Select-String 'port\s*=').Line -match 'port\s*=\s*(\d+)') {
+        $SERVER_PORT = $matches[1]
+    }
+}
+
+Write-Output ""
+Write-Output "🚀 Starting Suwayomi-Server..."
+Write-Output "🌐 Access at: http://$SERVER_IP`:$SERVER_PORT"
+Write-Output ""
+
+# --- Launch Server ---
+& java `
+    -Djava.awt.headless=true `
+    -Dcef.headless=true `
+    "-Dsuwayomi.tachidesk.config.server.rootDir=$CUSTOM_DATA_ROOT" `
+    "-Dsuwayomi.tachidesk.config.server.webUIFlavor=CUSTOM" `
+    "-Dsuwayomi.tachidesk.config.server.webUI.autoDownload=false" `
+    "-Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false" `
+    "-Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false" `
+    -jar "$SERVER_JAR_ABSOLUTE_PATH"
