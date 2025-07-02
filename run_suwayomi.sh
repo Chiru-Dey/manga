@@ -9,15 +9,66 @@ CUSTOM_DATA_ROOT="$(pwd)/suwayomi-data"
 CUSTOM_WEBUI_TARGET_DIR="$CUSTOM_DATA_ROOT/webUI"
 SERVER_CONF_FILE="$CUSTOM_DATA_ROOT/server.conf"
 
-# --- Set JAVA_HOME for Suwayomi-Server build (using JDK 21 as per user feedback) ---
-echo "Setting JAVA_HOME to JDK 21 for Suwayomi-Server build..."
-export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
-export PATH="$JAVA_HOME/bin:$PATH"
-echo "JAVA_HOME set to: $JAVA_HOME"
-if [ ! -d "$JAVA_HOME" ]; then
-    echo "Error: JDK 21 not found at $JAVA_HOME. Please ensure it's installed or update the script with the correct path."
-    exit 1
-fi
+# --- Dynamically set JAVA_HOME and check Java version (21 or higher) ---
+find_java_home_and_check_version() {
+    local required_version=21
+    local java_cmd=""
+    local java_version=""
+    local java_major_version=0
+    local java_home_path=""
+
+    # Try to find Java using update-alternatives (common on Debian/Ubuntu)
+    if command -v update-alternatives &> /dev/null; then
+        java_cmd=$(update-alternatives --query java | grep "Value:" | awk '{print $2}')
+        if [ -n "$java_cmd" ]; then
+            java_home_path=$(dirname $(dirname "$java_cmd"))
+        fi
+    fi
+
+    # Fallback if update-alternatives didn't find it or is not available
+    if [ -z "$java_cmd" ]; then
+        java_cmd=$(which java)
+        if [ -n "$java_cmd" ]; then
+            java_home_path=$(dirname $(dirname "$java_cmd"))
+        fi
+    fi
+
+    if [ -z "$java_cmd" ]; then
+        echo "Error: Java executable not found. Please ensure Java is installed and in your PATH."
+        exit 1
+    fi
+
+    # Get Java version
+    java_version=$("$java_cmd" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    if [ -z "$java_version" ]; then
+        echo "Error: Could not determine Java version from '$java_cmd -version'."
+        exit 1
+    fi
+
+    # Extract major version number
+    java_major_version=$(echo "$java_version" | awk -F'.' '{print $1}')
+    # Handle Java 9+ versioning (e.g., "9", "10", "11", "17", "21")
+    if [[ "$java_major_version" =~ ^[0-9]+$ && "$java_major_version" -lt 9 ]]; then
+        # For Java 1.x.x versions, the major version is the second part (e.g., 1.8.0 -> 8)
+        java_major_version=$(echo "$java_version" | awk -F'.' '{print $2}')
+    fi
+
+    echo "Detected Java version: $java_version (Major: $java_major_version)"
+
+    # Check if the major version is greater than or equal to the required version
+    if (( java_major_version < required_version )); then
+        echo "Error: Suwayomi-Server requires Java $required_version or higher. Detected version: $java_major_version."
+        exit 1
+    fi
+
+    echo "Java version $java_major_version is compatible."
+    export JAVA_HOME="$java_home_path"
+    export PATH="$JAVA_HOME/bin:$PATH"
+    echo "JAVA_HOME set to: $JAVA_HOME"
+}
+
+# Call the function to set JAVA_HOME and validate version
+find_java_home_and_check_version
 
 
 # --- Kill previous server process (if any) ---
@@ -148,9 +199,11 @@ echo "Access the WebUI at: http://${SERVER_IP}:${SERVER_PORT}"
 echo "" # Newline for readability
 
 # Run the server, setting the data root and WebUI flavor via system properties
-java -Dsuwayomi.tachidesk.config.server.rootDir="$CUSTOM_DATA_ROOT" \
-     -Dsuwayomi.tachidesk.config.server.webUIFlavor=CUSTOM \
-     -Dsuwayomi.tachidesk.config.server.webUI.autoDownload=false \
-     -Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false \
-     -Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false \
-     -jar "$SERVER_JAR_ABSOLUTE_PATH"
+xvfb-run java -Djava.awt.headless=true \
+             -Dcef.headless=true \
+             -Dsuwayomi.tachidesk.config.server.rootDir="$CUSTOM_DATA_ROOT" \
+             -Dsuwayomi.tachidesk.config.server.webUIFlavor=CUSTOM \
+             -Dsuwayomi.tachidesk.config.server.webUI.autoDownload=false \
+             -Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false \
+             -Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false \
+             -jar "$SERVER_JAR_ABSOLUTE_PATH"
