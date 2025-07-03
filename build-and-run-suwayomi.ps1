@@ -60,7 +60,7 @@ Write-Output "Building Suwayomi-Server..."
 Push-Location $SUWAYOMI_SERVER_DIR
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "server\build"
 
-& .\gradlew.bat shadowJar
+& ./gradlew server:shadowJar
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Suwayomi-Server build failed!"
     exit 1

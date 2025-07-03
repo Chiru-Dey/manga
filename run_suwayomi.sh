@@ -85,7 +85,7 @@ cd "$SUWAYOMI_SERVER_DIR" || { echo "Error: Suwayomi-Server directory not found!
 # Clean previous builds and then run the Gradle shadowJar task to build the executable JAR
 rm -rf server/build/*.jar
 rm -rf server/build/libs/*.jar
-./gradlew shadowJar
+./gradlew server:shadowJar
 if [ $? -ne 0 ]; then
     echo "Error: Suwayomi-Server build failed! Exiting."
     exit 1
