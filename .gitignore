@@ -3,3 +3,8 @@
 
 .komikku/
 suwayomi-data/
+env_folder/
+yarn.lock
+node_modules/.yarn-integrity
+devbox.lock
+devbox.json
