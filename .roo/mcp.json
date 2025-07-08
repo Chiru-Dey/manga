@@ -13,7 +13,7 @@
         "resolve-library-id",
         "get-library-docs"
       ],
-      "disabled": true
+      "disabled": false
     },
     "puppeteer": {
       "command": "npx",
@@ -33,7 +33,7 @@
       "disabledTools": [
         "puppeteer_navigate"
       ],
-      "disabled": true
+      "disabled": false
     },
     "memory": {
       "command": "npx",
@@ -51,17 +51,7 @@
         "read_graph",
         "delete_relations"
       ],
-      "disabled": true
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/home/user/manga/"
-      ],
-      "disabled": true,
-      "alwaysAllow": []
+      "disabled": false
     },
     "sequentialthinking": {
       "command": "npx",
@@ -72,7 +62,7 @@
       "alwaysAllow": [
         "sequentialthinking"
       ],
-      "disabled": true
+      "disabled": false
     },
     "tavily": {
       "command": "npx",
@@ -89,7 +79,7 @@
         "tavily-map",
         "tavily-crawl"
       ],
-      "disabled": true
+      "disabled": false
     },
     "browserbase": {
       "command": "npx",
@@ -121,7 +111,7 @@
         "browserbase_navigate_forward",
         "browserbase_navigate_back"
       ],
-      "disabled": true
+      "disabled": false
     }
   }
 }

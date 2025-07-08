@@ -19,7 +19,7 @@ find_java_home_and_check_version() {
 
     # Try to find Java using update-alternatives (common on Debian/Ubuntu)
     if command -v update-alternatives &> /dev/null; then
-        java_cmd=$(update-alternatives --query java | grep "Value:" | awk '{print $2}')
+        java_cmd=$(update-alternatives --query java 2>/dev/null | grep "Value:" | awk '{print $2}')
         if [ -n "$java_cmd" ]; then
             java_home_path=$(dirname $(dirname "$java_cmd"))
         fi
@@ -29,6 +29,8 @@ find_java_home_and_check_version() {
     if [ -z "$java_cmd" ]; then
         java_cmd=$(which java)
         if [ -n "$java_cmd" ]; then
+            # Resolve symlinks to get the actual path
+            java_cmd=$(readlink -f "$java_cmd")
             java_home_path=$(dirname $(dirname "$java_cmd"))
         fi
     fi
@@ -67,9 +69,60 @@ find_java_home_and_check_version() {
     echo "JAVA_HOME set to: $JAVA_HOME"
 }
 
-# Call the function to set JAVA_HOME and validate version
-find_java_home_and_check_version
+# --- Setup Node.js using fnm ---
+setup_node_with_fnm() {
+    local required_node_version="22.12.0"
+    
+    # Check if fnm is available
+    if ! command -v fnm &> /dev/null; then
+        echo "Error: fnm not found. Please install fnm first."
+        exit 1
+    fi
+    
+    # Source fnm environment
+    eval "$(fnm env --use-on-cd)"
+    
+    echo "Setting up Node.js $required_node_version using fnm..."
+    
+    # Check if the required version is already installed
+    if fnm list | grep -q "$required_node_version"; then
+        echo "Node.js $required_node_version is already installed."
+    else
+        echo "Installing Node.js $required_node_version..."
+        fnm install "$required_node_version"
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to install Node.js $required_node_version using fnm."
+            exit 1
+        fi
+    fi
+    
+    # Use the required version
+    fnm use "$required_node_version"
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to switch to Node.js $required_node_version using fnm."
+        exit 1
+    fi
+    
+    # Verify the version
+    local current_node_version=$(node --version)
+    echo "Current Node.js version: $current_node_version"
+    
+    # Check if yarn is available
+    if ! command -v yarn &> /dev/null; then
+        echo "Yarn not found. Installing yarn..."
+        npm install -g yarn
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to install yarn."
+            exit 1
+        fi
+    fi
+    
+    echo "Yarn version: $(yarn --version)"
+}
 
+# Call the functions to set up Java and Node.js
+find_java_home_and_check_version
+setup_node_with_fnm
 
 # --- Kill previous server process (if any) ---
 echo "Attempting to kill any running Suwayomi-Server processes..."
@@ -106,23 +159,6 @@ cd - > /dev/null
 echo "Building Suwayomi-WebUI static files..."
 # Navigate to the WebUI directory
 cd "$SUWAYOMI_WEBUI_DIR" || { echo "Error: Suwayomi-WebUI directory not found! Exiting."; exit 1; }
-
-# Switch Node version
-# Source NVM if available
-if [ -s "$HOME/.nvm/nvm.sh" ]; then
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-  echo "NVM sourced."
-  nvm use 22.12.0
-  if [ $? -ne 0 ]; then
-      echo "Error: Failed to switch Node.js version to 22.12.0 using NVM. Exiting."
-      exit 1
-  fi
-else
-  echo "Warning: NVM not found or nvm.sh script not accessible. Ensure NVM is installed and configured correctly."
-  echo "Attempting to proceed without NVM, but Node.js version might be incorrect."
-fi
 
 # Install Node.js dependencies
 yarn install
