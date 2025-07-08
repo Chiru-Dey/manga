@@ -3,9 +3,9 @@ node_modules/
 .vscode
 .env
 .idea
-
+.yarn/
 build/*
-
+yarn.lock
 tools/scripts/tokens.json
-
+package.json
 src/lib/graphql/schema.json
