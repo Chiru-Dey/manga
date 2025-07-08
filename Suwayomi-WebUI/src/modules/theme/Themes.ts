@@ -20,6 +20,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('global.label.default'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -48,6 +51,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.lavender'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -84,6 +90,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.dune'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -112,6 +121,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.rosegold'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -144,6 +156,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.forest_dew'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -172,6 +187,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.mountain_sunset'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -204,6 +222,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.crimson'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -232,6 +253,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.minty_miracles'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -264,6 +288,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.orange_juice'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -296,6 +323,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.bright_pink'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -324,6 +354,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.veronica'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -352,6 +385,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.tree_frog_green'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
@@ -384,6 +420,9 @@ export const themes = {
         isCustom: false,
         getName: () => translate('settings.appearance.theme.themes.ying_and_yang'),
         muiTheme: {
+            typography: {
+                fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+            },
             colorSchemes: {
                 light: {
                     palette: {
