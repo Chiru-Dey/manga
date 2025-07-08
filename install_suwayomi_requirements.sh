@@ -2,8 +2,8 @@
 
 echo "--- Installing Suwayomi Prerequisites ---"
 
-# --- Install JDK 11+ ---
-echo "Checking for Java Development Kit (JDK) 11 or higher..."
+# --- Install JDK 21+ ---
+echo "Checking for Java Development Kit (JDK) 21 or higher..."
 if type -p java > /dev/null; then
     _java=java
 elif [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
@@ -12,8 +12,8 @@ fi
 
 if [ -n "$_java" ]; then
     version=$("$_java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
-    if [[ "$version" < "11" ]]; then
-        echo "Found Java version $version, but 11 or higher is required."
+    if [[ "$version" < "21" ]]; then
+        echo "Found Java version $version, but 21 or higher is required."
         JAVA_INSTALLED=false
     else
         echo "JDK $version is already installed."
@@ -25,34 +25,34 @@ else
 fi
 
 if [ "$JAVA_INSTALLED" = false ]; then
-    echo "Attempting to install OpenJDK 11..."
+    echo "Attempting to install OpenJDK 21..."
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         # Linux (Debian/Ubuntu)
         if command -v apt &> /dev/null; then
             echo "Detected Debian/Ubuntu. Using apt."
-            sudo apt update && sudo apt install -y openjdk-11-jdk
+            sudo apt update && sudo apt install -y openjdk-21-jdk
         # Linux (Fedora/CentOS/RHEL)
         elif command -v yum &> /dev/null; then
             echo "Detected Fedora/CentOS/RHEL. Using yum."
-            sudo yum install -y java-11-openjdk-devel
+            sudo yum install -y java-21-openjdk-devel
         else
-            echo "Unsupported Linux distribution. Please install OpenJDK 11 manually."
+            echo "Unsupported Linux distribution. Please install OpenJDK 21 manually."
             echo "Refer to: https://openjdk.org/install/"
         fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
         if command -v brew &> /dev/null; then
             echo "Detected macOS. Using Homebrew."
-            brew install openjdk@11
+            brew install openjdk@21
             # Link OpenJDK to default JavaHome (optional, but good practice)
-            sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
-            echo "Remember to add 'export PATH=\"/usr/local/opt/openjdk@11/bin:$PATH\"' to your shell profile (e.g., ~/.zshrc or ~/.bashrc)"
+            sudo ln -sfn /usr/local/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+            echo "Remember to add 'export PATH=\"/usr/local/opt/openjdk@21/bin:$PATH\"' to your shell profile (e.g., ~/.zshrc or ~/.bashrc)"
         else
-            echo "Homebrew not found. Please install Homebrew (https://brew.sh/) and then run this script again, or install OpenJDK 11 manually."
+            echo "Homebrew not found. Please install Homebrew (https://brew.sh/) and then run this script again, or install OpenJDK 21 manually."
             echo "Refer to: https://openjdk.org/install/"
         fi
     else
-        echo "Unsupported operating system. Please install OpenJDK 11 manually."
+        echo "Unsupported operating system. Please install OpenJDK 21 manually."
         echo "Refer to: https://openjdk.org/install/"
     fi
 fi
@@ -110,5 +110,5 @@ fi
 
 echo ""
 echo "--- Prerequisite installation complete. ---"
-echo "Please verify that JDK 11+ and Node.js 20+ (with Yarn) are correctly installed."
+echo "Please verify that JDK 21+ and Node.js 20+ (with Yarn) are correctly installed."
 echo "You might need to restart your terminal or source your shell profile for changes to take effect."
