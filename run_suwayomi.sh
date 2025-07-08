@@ -231,7 +231,7 @@ fi
 echo "Starting Suwayomi-Server with local WebUI..."
 echo "Server Data Root: $CUSTOM_DATA_ROOT"
 echo "WebUI Flavor: CUSTOM (server will use local files)"
-echo "Access the WebUI at: http://${SERVER_IP}:${SERVER_PORT}"
+# echo "Access the WebUI at: http://${SERVER_IP}:${SERVER_PORT}"
 echo "" # Newline for readability
 
 # Run the server, setting the data root and WebUI flavor via system properties
