@@ -14,3 +14,4 @@ Suwayomi-WebUI/package.json
 Suwayomi-WebUI/yarn.lock
 Suwayomi-WebUI/package.json
 Suwayomi-WebUI/yarn.lock
+.devbox/**
