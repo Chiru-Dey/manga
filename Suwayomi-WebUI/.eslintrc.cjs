@@ -9,6 +9,7 @@ module.exports = {
         'header',
     ],
     parserOptions: {
+        tsconfigRootDir: __dirname,
         project: ['./tsconfig.json', './tsconfig.node.json', './tools/scripts/tsconfig.json'],
     },
     overrides: [

@@ -6,14 +6,15 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { useTheme } from '@mui/material/styles';
-import { useLayoutEffect, useState } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import Stack from '@mui/material/Stack';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import MenuItem from '@mui/material/MenuItem';
 import Modal from '@mui/material/Modal';
-import { bindPopover, bindTrigger, usePopupState } from 'material-ui-popup-state/hooks';
+import PopupState from 'material-ui-popup-state';
+import { bindHover, bindMenu } from 'material-ui-popup-state/hooks';
 import { Vibrant } from 'node-vibrant/browser';
 import { FastAverageColor } from 'fast-average-color';
+import { Menu } from '@/modules/core/components/menu/Menu.tsx';
 import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { SpinnerImage } from '@/modules/core/components/SpinnerImage.tsx';
 import { MANGA_COVER_ASPECT_RATIO } from '@/modules/manga/Manga.constants.ts';
@@ -27,12 +28,8 @@ export const Thumbnail = ({
     manga: Partial<MangaThumbnailInfo>;
     mangaDynamicColorSchemes: boolean;
 }) => {
-    const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
-
-    const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-fullscreen' });
-
-    const [isImageReady, setIsImageReady] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false); // State for controlling the modal's open/close status
 
     useLayoutEffect(() => {
         if (!mangaDynamicColorSchemes) {
@@ -81,66 +78,82 @@ export const Thumbnail = ({
     }, []);
 
     return (
-        <>
-            <Stack
-                sx={{
-                    position: 'relative',
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                    backgroundColor: 'background.paper',
-                    width: '150px',
-                    maxHeight: 'fit-content',
-                    aspectRatio: MANGA_COVER_ASPECT_RATIO,
-                    flexShrink: 0,
-                    flexGrow: 0,
-                    [theme.breakpoints.up('lg')]: {
-                        width: '200px',
-                    },
-                    [theme.breakpoints.up('xl')]: {
-                        width: '300px',
-                    },
-                }}
-            >
-                <SpinnerImage
-                    src={Mangas.getThumbnailUrl(manga)}
-                    alt="Manga Thumbnail"
-                    onLoad={() => setIsImageReady(true)}
-                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                {isImageReady && (
+        <PopupState variant="popover" popupId="manga-thumbnail-menu">
+            {(popupState) => (
+                <>
+                    {/* The modal component */}
+                    <Modal
+                        open={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
+                    >
+                        <SpinnerImage
+                            src={Mangas.getThumbnailUrl(manga)}
+                            alt="Manga Thumbnail"
+                            imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
+                        />
+                    </Modal>
+
+                    {/* Thumbnail Stack with Menu Trigger */}
                     <Stack
-                        {...bindTrigger(popupState)}
+                        {...bindHover(popupState)} // Hover to open menu
+                        onClick={() => setIsModalOpen(true)} // Click to open modal
                         sx={{
-                            position: 'absolute',
-                            top: 0,
-                            bottom: 0,
-                            width: '100%',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            opacity: 0,
-                            '&:hover': {
-                                background: 'rgba(0, 0, 0, 0.4)',
-                                cursor: 'pointer',
-                                opacity: 1,
-                            },
+                            position: 'relative',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            backgroundColor: 'background.paper',
+                            width: '150px',
+                            maxHeight: 'fit-content',
+                            aspectRatio: MANGA_COVER_ASPECT_RATIO,
+                            cursor: 'pointer',
                         }}
                     >
-                        <OpenInFullIcon fontSize="large" color="primary" />
+                        <SpinnerImage
+                            src={Mangas.getThumbnailUrl(manga)}
+                            alt="Manga Thumbnail"
+                            imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
+                        />
                     </Stack>
-                )}
-            </Stack>
-            <Modal {...bindPopover(popupState)} sx={{ outline: 0 }}>
-                <Stack
-                    onClick={() => popupState.close()}
-                    sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
-                >
-                    <SpinnerImage
-                        src={Mangas.getThumbnailUrl(manga)}
-                        alt="Manga Thumbnail"
-                        imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
-                    />
-                </Stack>
-            </Modal>
-        </>
+
+                    {/* Menu Component */}
+                    <Menu
+                        {...bindMenu(popupState)}
+                        disablePortal
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    >
+                        {(onClose) => (
+                            <>
+                                <MenuItem
+                                    onClick={() => {
+                                        setIsModalOpen(true); // Open the modal when "Expand" is clicked
+                                        onClose(); // Close the menu
+                                    }}
+                                >
+                                    Expand
+                                </MenuItem>
+                                <MenuItem
+                                    onClick={() => {
+                                        // TODO: Implement Change Thumbnail functionality
+                                        onClose(); // Close the menu
+                                    }}
+                                >
+                                    Change Thumbnail
+                                </MenuItem>
+                                <MenuItem
+                                    onClick={() => {
+                                        // TODO: Implement Reset Thumbnail functionality
+                                        onClose(); // Close the menu
+                                    }}
+                                >
+                                    Reset Thumbnail
+                                </MenuItem>
+                            </>
+                        )}
+                    </Menu>
+                </>
+            )}
+        </PopupState>
     );
 };
