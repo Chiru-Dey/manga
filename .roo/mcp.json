@@ -1,3 +1,127 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "env": {
+        "DEFAULT_MINIMUM_TOKENS": ""
+      },
+      "alwaysAllow": [
+        "resolve-library-id",
+        "get-library-docs"
+      ],
+      "disabled": true
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "alwaysAllow": [
+        "puppeteer_navigate",
+        "puppeteer_screenshot",
+        "puppeteer_click",
+        "puppeteer_fill",
+        "puppeteer_select",
+        "puppeteer_hover",
+        "puppeteer_evaluate"
+      ],
+      "disabledTools": [
+        "puppeteer_navigate"
+      ],
+      "disabled": true
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "alwaysAllow": [
+        "create_entities",
+        "create_relations",
+        "add_observations",
+        "delete_entities",
+        "open_nodes",
+        "search_nodes",
+        "read_graph",
+        "delete_relations"
+      ],
+      "disabled": true
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/user/manga/"
+      ],
+      "disabled": true,
+      "alwaysAllow": []
+    },
+    "sequentialthinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "alwaysAllow": [
+        "sequentialthinking"
+      ],
+      "disabled": true
+    },
+    "tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "tavily-mcp@0.2.3"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "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"
+      },
+      "alwaysAllow": [
+        "tavily-search",
+        "tavily-extract",
+        "tavily-map",
+        "tavily-crawl"
+      ],
+      "disabled": true
+    },
+    "browserbase": {
+      "command": "npx",
+      "args": [
+        "@browserbasehq/mcp"
+      ],
+      "env": {
+        "BROWSERBASE_API_KEY": "bb_live_Mome32UP2vUzXLyA_OwVgpg-TI4",
+        "BROWSERBASE_PROJECT_ID": "d2f7a7af-c12e-4fe5-ad9a-62b4bf8cf5fc"
+      },
+      "alwaysAllow": [
+        "browserbase_wait",
+        "browserbase_close",
+        "browserbase_resize",
+        "browserbase_snapshot",
+        "browserbase_drag",
+        "browserbase_click",
+        "browserbase_hover",
+        "browserbase_type",
+        "browserbase_press_key",
+        "browserbase_get_text",
+        "browserbase_navigate",
+        "browserbase_take_screenshot",
+        "browserbase_select_option",
+        "browserbase_context_create",
+        "browserbase_session_close",
+        "browserbase_context_delete",
+        "browserbase_session_create",
+        "browserbase_navigate_forward",
+        "browserbase_navigate_back"
+      ],
+      "disabled": true
+    }
+  }
 }
