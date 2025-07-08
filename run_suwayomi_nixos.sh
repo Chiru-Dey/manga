@@ -178,24 +178,24 @@ if [ -f "$SERVER_CONF_FILE" ]; then
     CONFIG_IP=$(grep "ip =" "$SERVER_CONF_FILE" | awk -F'"' '{print $2}' | tr -d '[:space:]')
     CONFIG_PORT=$(grep "port =" "$SERVER_CONF_FILE" | awk '{print $3}' | tr -d '[:space:]')
 
-    if [ -n "$CONFIG_IP" ]; then
-        # If IP is 0.0.0.0, use localhost for user-facing URL
-        if [ "$CONFIG_IP" == "0.0.0.0" ]; then
-            SERVER_IP="localhost"
-        else
-            SERVER_IP="$CONFIG_IP"
-        fi
-    fi
-    if [ -n "$CONFIG_PORT" ]; then
-        SERVER_PORT="$CONFIG_PORT"
-    fi
-fi
+#     if [ -n "$CONFIG_IP" ]; then
+#         # If IP is 0.0.0.0, use localhost for user-facing URL
+#         if [ "$CONFIG_IP" == "0.0.0.0" ]; then
+#             SERVER_IP="localhost"
+#         else
+#             SERVER_IP="$CONFIG_IP"
+#         fi
+#     fi
+#     if [ -n "$CONFIG_PORT" ]; then
+#         SERVER_PORT="$CONFIG_PORT"
+#     fi
+# fi
 
 # --- Run Suwayomi-Server with custom WebUI path ---
 echo "Starting Suwayomi-Server with local WebUI..."
 echo "Server Data Root: $CUSTOM_DATA_ROOT"
 echo "WebUI Flavor: CUSTOM (server will use local files)"
-echo "Access the WebUI at: http://${SERVER_IP}:${SERVER_PORT}"
+# echo "Access the WebUI at: http://${SERVER_IP}:${SERVER_PORT}"
 echo "" # Newline for readability
 
 # Run the server, setting the data root and WebUI flavor via system properties
