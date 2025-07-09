@@ -10,28 +10,45 @@ import { useTheme } from '@mui/material/styles';
 import { useLayoutEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
-import { bindPopover, usePopupState } from 'material-ui-popup-state/hooks';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { bindPopover, usePopupState, bindMenu } from 'material-ui-popup-state/hooks'; // Removed bindTrigger
 import { Vibrant } from 'node-vibrant/browser';
 import { FastAverageColor } from 'fast-average-color';
+import { useLongPress } from 'use-long-press';
 import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { SpinnerImage } from '@/modules/core/components/SpinnerImage.tsx';
 import { MANGA_COVER_ASPECT_RATIO } from '@/modules/manga/Manga.constants.ts';
-import { MangaThumbnailInfo } from '@/modules/manga/Manga.types.ts';
+import { MangaIdInfo, MangaThumbnailInfo } from '@/modules/manga/Manga.types.ts';
 import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
+import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 
 export const Thumbnail = ({
     manga,
     mangaDynamicColorSchemes,
 }: {
-    manga: Partial<MangaThumbnailInfo>;
+    manga: Partial<MangaThumbnailInfo & MangaIdInfo>;
     mangaDynamicColorSchemes: boolean;
 }) => {
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
 
     const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-fullscreen' });
+    const thumbnailMenuPopupState = usePopupState({
+        variant: 'popover',
+        popupId: `thumbnail-context-menu-${manga.id?.toString() ?? 'unknown'}`, // Added fallback for manga.id
+    });
 
     const [isImageReady, setIsImageReady] = useState(false);
+
+    const longPressEvent = useLongPress(
+        () => {
+            thumbnailMenuPopupState.open();
+        },
+        {
+            threshold: 600,
+        },
+    );
 
     useLayoutEffect(() => {
         if (!mangaDynamicColorSchemes) {
@@ -82,6 +99,11 @@ export const Thumbnail = ({
     return (
         <>
             <Stack
+                {...longPressEvent}
+                onContextMenu={(e: React.MouseEvent) => {
+                    e.preventDefault();
+                    thumbnailMenuPopupState.open();
+                }}
                 sx={{
                     position: 'relative',
                     borderRadius: 1,
@@ -124,6 +146,7 @@ export const Thumbnail = ({
                         }}
                     />
                 )}
+                {isImageReady && <ThumbnailOptionButton popupState={thumbnailMenuPopupState} manga={manga} />}
             </Stack>
             <Modal {...bindPopover(popupState)} sx={{ outline: 0 }}>
                 <Stack
@@ -137,6 +160,16 @@ export const Thumbnail = ({
                     />
                 </Stack>
             </Modal>
+            <Menu {...bindMenu(thumbnailMenuPopupState)}>
+                <MenuItem
+                    onClick={() => {
+                        thumbnailMenuPopupState.close();
+                        popupState.open();
+                    }}
+                >
+                    Expand
+                </MenuItem>
+            </Menu>
         </>
     );
 };

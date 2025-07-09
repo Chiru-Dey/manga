@@ -13,7 +13,7 @@
         "resolve-library-id",
         "get-library-docs"
       ],
-      "disabled": false
+      "disabled": true
     },
     "puppeteer": {
       "command": "npx",
@@ -33,7 +33,7 @@
       "disabledTools": [
         "puppeteer_navigate"
       ],
-      "disabled": false
+      "disabled": true
     },
     "memory": {
       "command": "npx",
@@ -51,7 +51,30 @@
         "read_graph",
         "delete_relations"
       ],
-      "disabled": false
+      "disabled": true
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/user/manga/"
+      ],
+      "disabled": false,
+      "alwaysAllow": [
+        "read_file",
+        "read_multiple_files",
+        "write_file",
+        "edit_file",
+        "create_directory",
+        "list_directory",
+        "list_directory_with_sizes",
+        "directory_tree",
+        "move_file",
+        "list_allowed_directories",
+        "get_file_info",
+        "search_files"
+      ]
     },
     "sequentialthinking": {
       "command": "npx",
@@ -62,7 +85,7 @@
       "alwaysAllow": [
         "sequentialthinking"
       ],
-      "disabled": false
+      "disabled": true
     },
     "tavily": {
       "command": "npx",
@@ -79,7 +102,7 @@
         "tavily-map",
         "tavily-crawl"
       ],
-      "disabled": false
+      "disabled": true
     },
     "browserbase": {
       "command": "npx",
@@ -111,7 +134,7 @@
         "browserbase_navigate_forward",
         "browserbase_navigate_back"
       ],
-      "disabled": false
+      "disabled": true
     }
   }
 }
