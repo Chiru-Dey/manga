@@ -10,7 +10,7 @@ import { useTheme } from '@mui/material/styles';
 import { useLayoutEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
-import { bindPopover, bindTrigger, usePopupState } from 'material-ui-popup-state/hooks';
+import { bindPopover, usePopupState } from 'material-ui-popup-state/hooks';
 import { Vibrant } from 'node-vibrant/browser';
 import { FastAverageColor } from 'fast-average-color';
 import { Mangas } from '@/modules/manga/services/Mangas.ts';
@@ -108,7 +108,6 @@ export const Thumbnail = ({
                 />
                 {isImageReady && (
                     <Stack
-                        {...bindTrigger(popupState)}
                         sx={{
                             position: 'absolute',
                             top: 0,
