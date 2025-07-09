@@ -10,9 +10,7 @@ import { useTheme } from '@mui/material/styles';
 import { useLayoutEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { bindPopover, usePopupState, bindMenu } from 'material-ui-popup-state/hooks'; // Removed bindTrigger
+import { bindPopover, usePopupState } from 'material-ui-popup-state/hooks'; // Removed bindTrigger
 import { Vibrant } from 'node-vibrant/browser';
 import { FastAverageColor } from 'fast-average-color';
 import { useLongPress } from 'use-long-press';
@@ -34,16 +32,13 @@ export const Thumbnail = ({
     const { setDynamicColor } = useAppThemeContext();
 
     const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-fullscreen' });
-    const thumbnailMenuPopupState = usePopupState({
-        variant: 'popover',
-        popupId: `thumbnail-context-menu-${manga.id?.toString() ?? 'unknown'}`, // Added fallback for manga.id
-    });
 
     const [isImageReady, setIsImageReady] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
     const longPressEvent = useLongPress(
         () => {
-            thumbnailMenuPopupState.open();
+            popupState.open();
         },
         {
             threshold: 600,
@@ -100,9 +95,11 @@ export const Thumbnail = ({
         <>
             <Stack
                 {...longPressEvent}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 onContextMenu={(e: React.MouseEvent) => {
                     e.preventDefault();
-                    thumbnailMenuPopupState.open();
+                    popupState.open();
                 }}
                 sx={{
                     position: 'relative',
@@ -146,7 +143,7 @@ export const Thumbnail = ({
                         }}
                     />
                 )}
-                {isImageReady && <ThumbnailOptionButton popupState={thumbnailMenuPopupState} manga={manga} />}
+                {isImageReady && isHovered && <ThumbnailOptionButton popupState={popupState} />}
             </Stack>
             <Modal {...bindPopover(popupState)} sx={{ outline: 0 }}>
                 <Stack
@@ -160,16 +157,6 @@ export const Thumbnail = ({
                     />
                 </Stack>
             </Modal>
-            <Menu {...bindMenu(thumbnailMenuPopupState)}>
-                <MenuItem
-                    onClick={() => {
-                        thumbnailMenuPopupState.close();
-                        popupState.open();
-                    }}
-                >
-                    Expand
-                </MenuItem>
-            </Menu>
         </>
     );
 };

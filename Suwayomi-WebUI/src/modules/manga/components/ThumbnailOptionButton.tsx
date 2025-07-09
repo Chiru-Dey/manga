@@ -7,46 +7,26 @@
  */
 
 import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { usePopupState, bindTrigger, bindMenu } from 'material-ui-popup-state/hooks';
+import { usePopupState, bindTrigger } from 'material-ui-popup-state/hooks';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { MangaIdInfo, MangaThumbnailInfo } from '@/modules/manga/Manga.types.ts';
 
 export interface ThumbnailOptionButtonProps {
     popupState: ReturnType<typeof usePopupState>;
-    manga: Partial<MangaThumbnailInfo & MangaIdInfo>;
 }
 
-export const ThumbnailOptionButton = ({ popupState, manga }: ThumbnailOptionButtonProps) => {
-    const menuPopupState = usePopupState({ variant: 'popover', popupId: `thumbnail-context-menu-${manga.id}` });
-
-    return (
-        <>
-            <IconButton
-                {...bindTrigger(menuPopupState)}
-                sx={{
-                    position: 'absolute',
-                    right: 8,
-                    bottom: 8,
-                    zIndex: 1,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    color: 'white',
-                    '&:hover': { backgroundColor: 'rgba(0,0,0,0.7)' },
-                }}
-            >
-                <MoreVertIcon />
-            </IconButton>
-            <Menu {...bindMenu(menuPopupState)}>
-                <MenuItem
-                    onClick={() => {
-                        menuPopupState.close();
-                        popupState.open();
-                    }}
-                >
-                    Expand
-                </MenuItem>
-            </Menu>
-        </>
-    );
-};
+export const ThumbnailOptionButton = ({ popupState }: ThumbnailOptionButtonProps) => (
+    <IconButton
+        {...bindTrigger(popupState)}
+        sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            zIndex: 1,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            color: 'white',
+            '&:hover': { backgroundColor: 'rgba(0,0,0,0.8)' },
+        }}
+    >
+        <MoreVertIcon />
+    </IconButton>
+);
