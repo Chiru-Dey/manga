@@ -157,3 +157,41 @@ if [ -f "$SERVER_CONF_FILE" ]; then
     fi
 fi
 
+SERVER_IP="localhost"
+SERVER_PORT="8080"
+
+if [ -f "$SERVER_CONF_FILE" ]; then
+    # Extract IP and Port from server.conf
+    # Assuming format like: ip = "0.0.0.0" and port = 8080
+    CONFIG_IP=$(grep "ip =" "$SERVER_CONF_FILE" | awk -F'"' '{print $2}' | tr -d '[:space:]')
+    CONFIG_PORT=$(grep "port =" "$SERVER_CONF_FILE" | awk '{print $3}' | tr -d '[:space:]')
+
+    if [ -n "$CONFIG_IP" ]; then
+        # If IP is 0.0.0.0, use localhost for user-facing URL
+        if [ "$CONFIG_IP" == "0.0.0.0" ]; then
+            SERVER_IP="localhost"
+        else
+            SERVER_IP="$CONFIG_IP"
+        fi
+    fi
+    if [ -n "$CONFIG_PORT" ]; then
+        SERVER_PORT="$CONFIG_PORT"
+    fi
+fi
+
+# --- Run Suwayomi-Server with custom WebUI path ---
+echo "Starting Suwayomi-Server with local WebUI..."
+echo "Server Data Root: $CUSTOM_DATA_ROOT"
+echo "WebUI Flavor: CUSTOM (server will use local files)"
+# echo "Access the WebUI at: http://${SERVER_IP}:${SERVER_PORT}"
+echo "" # Newline for readability
+
+# Run the server, setting the data root and WebUI flavor via system properties
+xvfb-run java -Djava.awt.headless=true \
+             -Dcef.headless=true \
+             -Dsuwayomi.tachidesk.config.server.rootDir="$CUSTOM_DATA_ROOT" \
+             -Dsuwayomi.tachidesk.config.server.webUIFlavor=CUSTOM \
+             -Dsuwayomi.tachidesk.config.server.webUI.autoDownload=false \
+             -Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false \
+             -Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false \
+             -jar "$SERVER_JAR_ABSOLUTE_PATH"
