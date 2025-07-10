@@ -35,7 +35,6 @@ export const Thumbnail = ({
     const { setDynamicColor } = useAppThemeContext();
     const optionButtonRef = useRef<HTMLButtonElement>(null);
 
-    const [isImageReady, setIsImageReady] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const thumbnailUrl = useMemo(() => {
@@ -157,18 +156,14 @@ export const Thumbnail = ({
                                 <SpinnerImage
                                     src={thumbnailUrl}
                                     alt="Manga Thumbnail"
-                                    onLoad={() => setIsImageReady(true)}
                                     imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                 />
                             </CardActionArea>
                             <ThumbnailOptionButton
                                 ref={optionButtonRef}
                                 popupState={popupState}
-                                sx={{
-                                    visibility: popupState.isOpen || !isImageReady ? 'hidden' : 'visible',
-                                    pointerEvents: popupState.isOpen || !isImageReady ? 'none' : 'all',
-                                }}
                                 onClick={(e) => {
+                                    popupState.toggle(e);
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }}
