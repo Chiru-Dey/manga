@@ -1,3 +1,4 @@
+git pull
 SUWAYOMI_SERVER_DIR="Suwayomi-Server"
 SUWAYOMI_WEBUI_DIR="Suwayomi-WebUI"
 # This will be the new data root for the server. It will be created in the current directory.
