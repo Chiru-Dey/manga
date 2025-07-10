@@ -119,7 +119,7 @@ cd - > /dev/null
 # --- Prepare custom data directory and copy WebUI ---
 echo "Preparing custom data directory: $CUSTOM_DATA_ROOT"
 # Clean up previous custom data directory if it exists
-rm -rf "$CUSTOM_DATA_ROOT"
+rm -rf "$CUSTOM_WEBUI_TARGET_DIR"
 # Create the target directory structure
 mkdir -p "$CUSTOM_WEBUI_TARGET_DIR"
 if [ $? -ne 0 ]; then
