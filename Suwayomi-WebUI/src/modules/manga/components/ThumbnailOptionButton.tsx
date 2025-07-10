@@ -8,20 +8,15 @@
 
 import MoreVert from '@mui/icons-material/MoreVert';
 import { Button, ButtonProps } from '@mui/material';
-import { PopupState } from 'material-ui-popup-state/hooks';
-import { bindToggle } from 'material-ui-popup-state';
 import { forwardRef } from 'react';
 
-type Props = {
-    popupState: PopupState;
-} & ButtonProps;
+type Props = ButtonProps;
 
 export const ThumbnailOptionButton = forwardRef<HTMLButtonElement, Props>(
-    ({ popupState, ...props }, ref) => {
+    (props, ref) => {
         return (
             <Button
                 ref={ref}
-                {...bindToggle(popupState)}
                 {...props}
                 variant="contained"
                 sx={{
