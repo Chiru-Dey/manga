@@ -6,22 +6,25 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { useTheme } from '@mui/material/styles';
-import { useLayoutEffect, useState } from 'react';
-import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
-import { bindMenu, bindTrigger, usePopupState } from 'material-ui-popup-state/hooks';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { Vibrant } from 'node-vibrant/browser';
+import Stack from '@mui/material/Stack';
+import { useTheme } from '@mui/material/styles';
 import { FastAverageColor } from 'fast-average-color';
+import { bindMenu, usePopupState } from 'material-ui-popup-state/hooks';
+import { Vibrant } from 'node-vibrant/browser';
+import { useLayoutEffect, useState } from 'react';
 import { useLongPress } from 'use-long-press';
-import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { SpinnerImage } from '@/modules/core/components/SpinnerImage.tsx';
 import { MANGA_COVER_ASPECT_RATIO } from '@/modules/manga/Manga.constants.ts';
 import { MangaIdInfo, MangaThumbnailInfo } from '@/modules/manga/Manga.types.ts';
-import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
+import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
+import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
+
+const isValidManga = (manga: Partial<MangaThumbnailInfo & MangaIdInfo>): manga is MangaThumbnailInfo & MangaIdInfo =>
+    'id' in manga && 'coverUrl' in manga;
 
 export const Thumbnail = ({
     manga,
@@ -32,6 +35,14 @@ export const Thumbnail = ({
 }) => {
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
+
+    // Ensure manga has required properties
+    if (!isValidManga(manga)) {
+        return null; // Or render a placeholder/error state
+    }
+
+    // Now TypeScript knows manga.id and manga.coverUrl are defined
+    const thumbnailUrl = Mangas.getThumbnailUrl(manga as MangaThumbnailInfo & MangaIdInfo);
 
     const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-options' });
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,15 +60,20 @@ export const Thumbnail = ({
     );
 
     useLayoutEffect(() => {
+        let isMounted = true;
+
         if (!mangaDynamicColorSchemes) {
-            return () => {};
+            setDynamicColor(null);
+            return undefined;
         }
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = Mangas.getThumbnailUrl(manga);
+        img.src = thumbnailUrl; // Use the guaranteed thumbnailUrl
 
         img.onload = () => {
+            if (!isMounted) return;
+
             const isLargeImage = img.width > 600 && img.height > 600;
 
             Promise.all([
@@ -71,6 +87,8 @@ export const Thumbnail = ({
                     ],
                 }),
             ]).then(([palette, averageColor]) => {
+                if (!isMounted) return;
+
                 if (
                     !palette.Vibrant ||
                     !palette.DarkVibrant ||
@@ -90,9 +108,10 @@ export const Thumbnail = ({
         };
 
         return () => {
+            isMounted = false;
             setDynamicColor(null);
         };
-    }, []);
+    }, [mangaDynamicColorSchemes, manga.id, thumbnailUrl, setDynamicColor]); // Use thumbnailUrl in dependencies
 
     return (
         <>
@@ -123,29 +142,11 @@ export const Thumbnail = ({
                 }}
             >
                 <SpinnerImage
-                    src={Mangas.getThumbnailUrl(manga)}
+                    src={thumbnailUrl} // Use the guaranteed thumbnailUrl
                     alt="Manga Thumbnail"
                     onLoad={() => setIsImageReady(true)}
                     imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
-                {isImageReady && (
-                    <Stack
-                        sx={{
-                            position: 'absolute',
-                            top: 0,
-                            bottom: 0,
-                            width: '100%',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            opacity: 0,
-                            '&:hover': {
-                                background: 'rgba(0, 0, 0, 0.4)',
-                                cursor: 'pointer',
-                                opacity: 1,
-                            },
-                        }}
-                    />
-                )}
                 {isImageReady && isHovered && <ThumbnailOptionButton popupState={popupState} />}
             </Stack>
             <Menu {...bindMenu(popupState)}>
@@ -164,7 +165,7 @@ export const Thumbnail = ({
                     sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
                 >
                     <SpinnerImage
-                        src={Mangas.getThumbnailUrl(manga)}
+                        src={thumbnailUrl} // Use the guaranteed thumbnailUrl
                         alt="Manga Thumbnail"
                         imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
                     />
