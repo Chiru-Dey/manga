@@ -52,10 +52,18 @@ export const Thumbnail = ({
         }
     }, [manga]);
 
+    const handleMenuClick = (event: MouseEvent<HTMLElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setAnchorEl(event.currentTarget);
+    };
+
     const longPressEvent = useLongPress(
         () => {
             if (optionButtonRef.current) {
-                setAnchorEl(optionButtonRef.current);
+                handleMenuClick({
+                    currentTarget: optionButtonRef.current,
+                } as unknown as MouseEvent<HTMLElement>);
             }
         },
         { threshold: 600 },
@@ -107,12 +115,6 @@ export const Thumbnail = ({
         };
     }, []);
 
-    const handleMenuClick = (event: MouseEvent<HTMLElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setAnchorEl(event.currentTarget);
-    };
-
     const handleMenuClose = () => {
         setAnchorEl(null);
     };
@@ -158,7 +160,6 @@ export const Thumbnail = ({
                     {...longPressEvent}
                     onContextMenu={(e: MouseEvent<HTMLElement>) => {
                         e.preventDefault();
-                        setAnchorEl(e.currentTarget);
                     }}
                     sx={{
                         height: '100%',
@@ -183,7 +184,14 @@ export const Thumbnail = ({
                         imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                     />
                 </CardActionArea>
-                <ThumbnailOptionButton ref={optionButtonRef} onClick={handleMenuClick} />
+                <ThumbnailOptionButton
+                    ref={optionButtonRef}
+                    onClick={handleMenuClick}
+                    sx={{
+                        visibility: isMenuOpen ? 'visible' : 'hidden',
+                        pointerEvents: isMenuOpen ? 'all' : 'none',
+                    }}
+                />
                 <MuiMenu anchorEl={anchorEl} open={isMenuOpen} onClose={handleMenuClose}>
                     <MuiMenuItem onClick={handleExpandClick}>
                         <ListItemIcon>

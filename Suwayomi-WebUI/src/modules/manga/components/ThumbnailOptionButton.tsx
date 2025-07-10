@@ -23,8 +23,6 @@ export const ThumbnailOptionButton = forwardRef<HTMLButtonElement, Props>(
                     position: 'absolute',
                     top: (theme) => theme.spacing(0.5),
                     right: (theme) => theme.spacing(0.5),
-                    visibility: 'hidden',
-                    pointerEvents: 'none',
                     minWidth: 'unset',
                     paddingX: '0',
                     paddingY: '2.5px',
