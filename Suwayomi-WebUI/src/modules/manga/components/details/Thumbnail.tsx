@@ -16,10 +16,11 @@ import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
 
-import { useMemo, useLayoutEffect, useState } from 'react';
+import { useRef, useMemo, useLayoutEffect, useState } from 'react';
 import { Stack, Menu } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { MangaActionMenuItems } from '@/modules/manga/components/MangaActionMenuItems.tsx';
+import { FastAverageColor } from 'fast-average-color';
 
 export const Thumbnail = ({
     manga,
@@ -30,6 +31,7 @@ export const Thumbnail = ({
 }) => {
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
+    const previousColors = useRef<TAppThemeContext['dynamicColor']>(null);
 
     const thumbnailUrl = useMemo(() => {
         try {
@@ -66,26 +68,6 @@ export const Thumbnail = ({
         { threshold: 600 },
     );
 
-    const processImageColors = async (image: HTMLImageElement) => {
-        const isLargeImage = image.width > 600 && image.height > 600;
-        const palette = await Vibrant.from(image).getPalette();
-
-        if (
-            !palette.Vibrant ||
-            !palette.DarkVibrant ||
-            !palette.LightVibrant ||
-            !palette.LightMuted ||
-            !palette.Muted ||
-            !palette.DarkMuted
-        ) {
-            return null;
-        }
-
-        return {
-            ...palette,
-        } as TAppThemeContext['dynamicColor'];
-    };
-
     useLayoutEffect(() => {
         let isMounted = true;
 
@@ -100,10 +82,50 @@ export const Thumbnail = ({
 
         img.onload = async () => {
             if (!isMounted) return;
-            const colors = await processImageColors(img);
-            if (isMounted && colors) {
-                setDynamicColor(colors);
-            }
+            const isLargeImage = img.width > 600 && img.height > 600;
+            Promise.all([
+                Vibrant.from(img).getPalette(),
+                new FastAverageColor().getColor(img, {
+                    algorithm: 'dominant',
+                    mode: isLargeImage ? 'speed' : 'precision',
+                    ignoredColor: [
+                        [255, 255, 255, 255, 75],
+                        [0, 0, 0, 255, 75],
+                    ],
+                }),
+            ]).then(([palette, averageColor]) => {
+                if (
+                    !palette.Vibrant ||
+                    !palette.DarkVibrant ||
+                    !palette.LightVibrant ||
+                    !palette.LightMuted ||
+                    !palette.Muted ||
+                    !palette.DarkMuted
+                ) {
+                    return;
+                }
+
+                const newColors = {
+                    ...palette,
+                    average: averageColor,
+                } as TAppThemeContext['dynamicColor'];
+
+                if (!isMounted) return;
+                if (
+                    previousColors.current === null ||
+                    newColors === null ||
+                    newColors.Vibrant?.hex !== previousColors.current.Vibrant?.hex ||
+                    newColors.DarkVibrant?.hex !== previousColors.current.DarkVibrant?.hex ||
+                    newColors.LightVibrant?.hex !== previousColors.current.LightVibrant?.hex ||
+                    newColors.LightMuted?.hex !== previousColors.current.LightMuted?.hex ||
+                    newColors.Muted?.hex !== previousColors.current.Muted?.hex ||
+                    newColors.DarkMuted?.hex !== previousColors.current.DarkMuted?.hex ||
+                    (newColors.average?.hex || null) !== (previousColors.current.average?.hex || null)
+                ) {
+                    setDynamicColor(newColors);
+                    previousColors.current = newColors;
+                }
+            });
         };
 
         return () => {

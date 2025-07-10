@@ -132,6 +132,14 @@
         "search_files",
         "move_file"
       ]
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "/home/chiru/manga/"
+      ]
     }
   }
 }
