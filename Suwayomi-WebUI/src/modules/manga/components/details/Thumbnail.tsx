@@ -6,21 +6,23 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import { bindMenu, usePopupState } from 'material-ui-popup-state/hooks';
+import { useTheme } from '@mui/material/styles';
+import { useLayoutEffect, useState, useMemo, useRef } from 'react';
+import { Stack, Modal } from '@mui/material';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import PopupState, { bindMenu } from 'material-ui-popup-state';
 import { Vibrant } from 'node-vibrant/browser';
+import { FastAverageColor } from 'fast-average-color';
 import { useLongPress } from 'use-long-press';
+
+import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { SpinnerImage } from '@/modules/core/components/SpinnerImage.tsx';
 import { MANGA_COVER_ASPECT_RATIO } from '@/modules/manga/Manga.constants.ts';
 import { MangaIdInfo, MangaThumbnailInfo } from '@/modules/manga/Manga.types.ts';
-import { Mangas } from '@/modules/manga/services/Mangas.ts';
-import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
-
-import { useMemo, useLayoutEffect, useState, useRef } from 'react';
-import { Stack, Menu } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { MangaActionMenuItems } from '@/modules/manga/components/MangaActionMenuItems.tsx';
-import { FastAverageColor } from 'fast-average-color';
+import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
+import { Menu } from '@/modules/core/components/menu/Menu.tsx';
+import { MenuItem } from '@/modules/core/components/menu/MenuItem.tsx';
 
 export const Thumbnail = ({
     manga,
@@ -31,8 +33,11 @@ export const Thumbnail = ({
 }) => {
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
-    const setDynamicColorRef = useRef(setDynamicColor);
-    setDynamicColorRef.current = setDynamicColor;
+    const optionButtonRef = useRef<HTMLButtonElement>(null);
+
+    const [isImageReady, setIsImageReady] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const thumbnailUrl = useMemo(() => {
         try {
@@ -42,60 +47,29 @@ export const Thumbnail = ({
         }
     }, [manga]);
 
-    const shouldProcessDynamicColor = mangaDynamicColorSchemes && thumbnailUrl;
-
-    const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-options' });
-    const [isImageReady, setIsImageReady] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
-
-    const safeMangaForActions = useMemo(() => {
-        if (!manga) {
-            return {
-                id: '',
-                title: 'Unknown Manga',
-                sourceId: 0,
-                downloadCount: 0,
-                unreadCount: 0,
-                chapters: { totalCount: 0 },
-            } as any;
-        }
-        return manga;
-    }, [manga]);
-
-    const longPressEvent = useLongPress(
-        () => {
-            popupState.open(undefined);
-        },
-        { threshold: 600 },
-    );
-
     useLayoutEffect(() => {
-        let isMounted = true;
-
-        if (!shouldProcessDynamicColor || !thumbnailUrl) {
-            setDynamicColorRef.current(null);
-            return undefined;
+        if (!mangaDynamicColorSchemes) {
+            return () => {};
         }
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = thumbnailUrl;
+        img.src = Mangas.getThumbnailUrl(manga);
 
-        img.onload = async () => {
-            if (!isMounted) return;
+        img.onload = () => {
             const isLargeImage = img.width > 600 && img.height > 600;
-            
-            try {
-                const palette = await Vibrant.from(img).getPalette();
-                const averageColor = await new FastAverageColor().getColor(img, {
+
+            Promise.all([
+                Vibrant.from(img).getPalette(),
+                new FastAverageColor().getColor(img, {
                     algorithm: 'dominant',
                     mode: isLargeImage ? 'speed' : 'precision',
                     ignoredColor: [
                         [255, 255, 255, 255, 75],
                         [0, 0, 0, 255, 75],
                     ],
-                });
-
+                }),
+            ]).then(([palette, averageColor]) => {
                 if (
                     !palette.Vibrant ||
                     !palette.DarkVibrant ||
@@ -104,109 +78,114 @@ export const Thumbnail = ({
                     !palette.Muted ||
                     !palette.DarkMuted
                 ) {
-                    // If palette is incomplete, don't set dynamic colors
-                    if (isMounted) {
-                        setDynamicColorRef.current(null);
-                    }
                     return;
                 }
 
-                const newColors = {
+                setDynamicColor({
                     ...palette,
                     average: averageColor,
-                } as TAppThemeContext['dynamicColor'];
-
-                if (isMounted) {
-                    setDynamicColorRef.current(newColors);
-                }
-            } catch (error) {
-                console.error("Error processing image colors:", error);
-                if (isMounted) {
-                    setDynamicColorRef.current(null); // Reset on error
-                }
-            }
-        };
-
-        // Handle potential image loading errors
-        img.onerror = () => {
-            console.error("Failed to load image for color extraction.");
-            if (isMounted) {
-                setDynamicColorRef.current(null);
-            }
+                } as TAppThemeContext['dynamicColor']);
+            });
         };
 
         return () => {
-            isMounted = false;
-            setDynamicColorRef.current(null); // Ensure cleanup
+            setDynamicColor(null);
         };
-    }, [shouldProcessDynamicColor, thumbnailUrl]);
+    }, []);
 
     if (!thumbnailUrl) return null;
 
     return (
-        <Stack
-            {...longPressEvent}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onContextMenu={(e: React.MouseEvent) => {
-                e.preventDefault();
-                popupState.open(e);
-            }}
-            sx={{
-                position: 'relative',
-                borderRadius: 1,
-                overflow: 'hidden',
-                backgroundColor: 'background.paper',
-                width: '150px',
-                maxHeight: 'fit-content',
-                aspectRatio: MANGA_COVER_ASPECT_RATIO,
-                flexShrink: 0,
-                flexGrow: 0,
-                [theme.breakpoints.up('lg')]: {
-                    width: '200px',
-                },
-                [theme.breakpoints.up('xl')]: {
-                    width: '300px',
-                },
-                cursor: 'pointer',
-            }}
-            component="div"
-            ref={(node) => popupState.setAnchorEl(node)}
-        >
-            <div
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    background: 'rgba(0,0,0,0.3)',
-                    opacity: isHovered ? 1 : 0,
-                    transition: 'opacity 200ms',
-                    zIndex: 0,
+        <>
+            <PopupState variant="popover" popupId="manga-thumbnail-options">
+                {(popupState) => {
+                    const longPressEvent = useLongPress(
+                        () => {
+                            popupState.open(optionButtonRef.current);
+                        },
+                        { threshold: 600 },
+                    );
+
+                    return (
+                        <>
+                            <Stack
+                                {...longPressEvent}
+                                onMouseEnter={() => setIsHovered(true)}
+                                onMouseLeave={() => setIsHovered(false)}
+                                onContextMenu={(e: React.MouseEvent) => {
+                                    e.preventDefault();
+                                    popupState.open(e);
+                                }}
+                                sx={{
+                                    position: 'relative',
+                                    borderRadius: 1,
+                                    overflow: 'hidden',
+                                    backgroundColor: 'background.paper',
+                                    width: '150px',
+                                    maxHeight: 'fit-content',
+                                    aspectRatio: MANGA_COVER_ASPECT_RATIO,
+                                    flexShrink: 0,
+                                    flexGrow: 0,
+                                    [theme.breakpoints.up('lg')]: {
+                                        width: '200px',
+                                    },
+                                    [theme.breakpoints.up('xl')]: {
+                                        width: '300px',
+                                    },
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        pointerEvents: 'none',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        opacity: isHovered ? 1 : 0,
+                                        transition: 'opacity 200ms',
+                                        zIndex: 0,
+                                    }}
+                                />
+                                <SpinnerImage
+                                    src={thumbnailUrl}
+                                    alt="Manga Thumbnail"
+                                    onLoad={() => setIsImageReady(true)}
+                                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                />
+                                <ThumbnailOptionButton
+                                    ref={optionButtonRef}
+                                    popupState={popupState}
+                                    visible={isHovered && isImageReady}
+                                />
+                                <Menu {...bindMenu(popupState)}>
+                                    {(onClose) => (
+                                        <MenuItem
+                                            onClick={() => {
+                                                setIsModalOpen(true);
+                                                onClose();
+                                            }}
+                                            Icon={OpenInFullIcon}
+                                            title="Expand"
+                                        />
+                                    )}
+                                </Menu>
+                            </Stack>
+                        </>
+                    );
                 }}
-            />
-            <SpinnerImage
-                src={thumbnailUrl}
-                alt="Manga Thumbnail"
-                onLoad={() => setIsImageReady(true)}
-                imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-            <ThumbnailOptionButton popupState={popupState} visible={isHovered && isImageReady} />
-            <Menu
-                {...bindMenu(popupState)}
-                id="manga-thumbnail-options-menu"
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-                <MangaActionMenuItems
-                    manga={safeMangaForActions}
-                    onClose={() => {
-                        popupState.close();
-                    }}
-                    setHideMenu={(hide) => {
-                        if (hide) popupState.close();
-                    }}
-                />
-            </Menu>
-        </Stack>
+            </PopupState>
+            <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} sx={{ outline: 0 }}>
+                <Stack
+                    onClick={() => setIsModalOpen(false)}
+                    sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
+                >
+                    <SpinnerImage
+                        src={thumbnailUrl}
+                        alt="Manga Thumbnail"
+                        imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
+                    />
+                </Stack>
+            </Modal>
+        </>
     );
 };
