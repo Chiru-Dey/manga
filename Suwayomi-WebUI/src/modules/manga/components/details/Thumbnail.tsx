@@ -16,7 +16,7 @@ import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
 
-import { useRef, useMemo, useLayoutEffect, useState } from 'react';
+import { useMemo, useLayoutEffect, useState } from 'react';
 import { Stack, Menu } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { MangaActionMenuItems } from '@/modules/manga/components/MangaActionMenuItems.tsx';
@@ -31,7 +31,6 @@ export const Thumbnail = ({
 }) => {
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
-    const previousColors = useRef<TAppThemeContext['dynamicColor']>(null);
 
     const thumbnailUrl = useMemo(() => {
         try {
@@ -83,17 +82,18 @@ export const Thumbnail = ({
         img.onload = async () => {
             if (!isMounted) return;
             const isLargeImage = img.width > 600 && img.height > 600;
-            Promise.all([
-                Vibrant.from(img).getPalette(),
-                new FastAverageColor().getColor(img, {
+            
+            try {
+                const palette = await Vibrant.from(img).getPalette();
+                const averageColor = await new FastAverageColor().getColor(img, {
                     algorithm: 'dominant',
                     mode: isLargeImage ? 'speed' : 'precision',
                     ignoredColor: [
                         [255, 255, 255, 255, 75],
                         [0, 0, 0, 255, 75],
                     ],
-                }),
-            ]).then(([palette, averageColor]) => {
+                });
+
                 if (
                     !palette.Vibrant ||
                     !palette.DarkVibrant ||
@@ -102,6 +102,10 @@ export const Thumbnail = ({
                     !palette.Muted ||
                     !palette.DarkMuted
                 ) {
+                    // If palette is incomplete, don't set dynamic colors
+                    if (isMounted) {
+                        setDynamicColor(null);
+                    }
                     return;
                 }
 
@@ -110,27 +114,28 @@ export const Thumbnail = ({
                     average: averageColor,
                 } as TAppThemeContext['dynamicColor'];
 
-                if (!isMounted) return;
-                if (
-                    previousColors.current === null ||
-                    newColors === null ||
-                    newColors.Vibrant?.hex !== previousColors.current.Vibrant?.hex ||
-                    newColors.DarkVibrant?.hex !== previousColors.current.DarkVibrant?.hex ||
-                    newColors.LightVibrant?.hex !== previousColors.current.LightVibrant?.hex ||
-                    newColors.LightMuted?.hex !== previousColors.current.LightMuted?.hex ||
-                    newColors.Muted?.hex !== previousColors.current.Muted?.hex ||
-                    newColors.DarkMuted?.hex !== previousColors.current.DarkMuted?.hex ||
-                    (newColors.average?.hex || null) !== (previousColors.current.average?.hex || null)
-                ) {
+                if (isMounted) {
                     setDynamicColor(newColors);
-                    previousColors.current = newColors;
                 }
-            });
+            } catch (error) {
+                console.error("Error processing image colors:", error);
+                if (isMounted) {
+                    setDynamicColor(null); // Reset on error
+                }
+            }
+        };
+
+        // Handle potential image loading errors
+        img.onerror = () => {
+            console.error("Failed to load image for color extraction.");
+            if (isMounted) {
+                setDynamicColor(null);
+            }
         };
 
         return () => {
             isMounted = false;
-            setDynamicColor(null);
+            setDynamicColor(null); // Ensure cleanup
         };
     }, [shouldProcessDynamicColor, thumbnailUrl, setDynamicColor]);
 
