@@ -16,6 +16,7 @@ import { MUIUtil } from '@/lib/mui/MUI.util.ts';
 
 export interface ThumbnailOptionButtonProps {
     popupState: PopupState;
+    visible?: boolean;
 }
 
 export const ThumbnailOptionButton = forwardRef(
@@ -49,10 +50,13 @@ export const ThumbnailOptionButton = forwardRef(
                         '&:hover': {
                             backgroundColor: (theme) => theme.palette.primary.dark,
                         },
-                        transition: (theme) => theme.transitions.create(
-                            ['background-color', 'transform', 'visibility'],
-                            { duration: 200 }
-                        ),
+                        transition: (theme) =>
+                            theme.transitions.create(
+                                ['background-color', 'transform', 'visibility'],
+                                {
+                                    duration: 200,
+                                },
+                            ),
                         '&:active': {
                             transform: 'scale(0.95)',
                         },

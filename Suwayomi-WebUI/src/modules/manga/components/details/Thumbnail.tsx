@@ -6,7 +6,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import React, { useLayoutEffect, useState, useMemo } from 'react';
+import { useLayoutEffect, useState, useMemo } from 'react';
 import Modal from '@mui/material/Modal';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -120,6 +120,11 @@ export const Thumbnail = ({
                 {...longPressEvent}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
+                // only allow left-button long press, prevent right-click browser menu, always open our menu
+                onPointerDown={(e: React.PointerEvent) => {
+                    if (e.button === 0) return; // allow left button as usual
+                    e.preventDefault();
+                }}
                 onContextMenu={(e: React.MouseEvent) => {
                     e.preventDefault();
                     popupState.open(e);
@@ -140,15 +145,30 @@ export const Thumbnail = ({
                     [theme.breakpoints.up('xl')]: {
                         width: '300px',
                     },
+                    cursor: 'pointer',
                 }}
+                component="div"
+                ref={(node) => popupState.setAnchorEl(node)}
             >
+                {/* Overlay dimmer */}
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none',
+                        background: 'rgba(0,0,0,0.3)',
+                        opacity: isHovered ? 1 : 0,
+                        transition: 'opacity 200ms',
+                        zIndex: 0,
+                    }}
+                />
                 <SpinnerImage
                     src={thumbnailUrl}
                     alt="Manga Thumbnail"
                     onLoad={() => setIsImageReady(true)}
-                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
-                {isImageReady && isHovered && <ThumbnailOptionButton popupState={popupState} />}
+                <ThumbnailOptionButton popupState={popupState} visible={isHovered && isImageReady} />
             </Stack>
             <Menu {...bindMenu(popupState)}>
                 <MenuItem
