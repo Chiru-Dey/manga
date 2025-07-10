@@ -47,7 +47,8 @@
         "add_observations",
         "open_nodes",
         "search_nodes",
-        "read_graph"
+        "read_graph",
+        "delete_entities"
       ],
       "disabled": false
     },

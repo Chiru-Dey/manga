@@ -1,35 +1,37 @@
-# Task History: Fix 3-dot Button and Context Menu for Manga Cards
+# Task History: Manga Thumbnail Context Menu
 
-## Initial Problem Statement
-The user reported several issues with the 3-dot button and its associated context menu on manga cards in the `Suwayomi-WebUI` project:
-*   The 3-dot button was always visible instead of appearing only on hover.
-*   Incorrect positioning and styling of the 3-dot button.
-*   A redundant two-step "Expand" action, where clicking "Expand" in the context menu first closed that menu and then opened a full-screen modal.
-*   The context menu was mispositioned.
+This document details the process of implementing a context menu for the manga thumbnail on the manga details page, including debugging and refining the functionality to match the library's manga card behavior.
 
-## Files Analyzed
-*   [`Suwayomi-WebUI/src/modules/manga/components/ThumbnailOptionButton.tsx`](Suwayomi-WebUI/src/modules/manga/components/ThumbnailOptionButton.tsx)
-*   [`Suwayomi-WebUI/src/modules/manga/components/details/Thumbnail.tsx`](Suwayomi-WebUI/src/modules/manga/components/details/Thumbnail.tsx)
-*   [`Suwayomi-WebUI/package.json`](Suwayomi-WebUI/package.json) (for dependencies context)
+## 1. Initial Request & Error Resolution
 
-## Implemented Changes (as of current state)
-### `Suwayomi-WebUI/src/modules/manga/components/ThumbnailOptionButton.tsx`
-*   **Removed Unused Imports:** `Menu`, `MenuItem`, `bindMenu`, `MangaIdInfo`, `MangaThumbnailInfo` were removed as they are no longer necessary for this component's new role.
-*   **Updated `ThumbnailOptionButtonProps` Interface:** The `manga` prop was removed from the interface, as the component no longer needs access to the manga object directly.
-*   **Styling and Positioning:**
-    *   Changed the `position` from `bottom: 8` to `top: 8` in the `sx` prop to correct the button's vertical alignment.
-    *   Adjusted `backgroundColor` and `color` for better visibility and hover effects.
-*   **Component Simplification:** The `Menu` and `MenuItem` components within `ThumbnailOptionButton` were removed. The responsibility for opening the full-screen modal directly from a context menu has been shifted to the `Thumbnail.tsx` component.
-*   **Functional Component Refactor:** The component was refactored to directly return the `IconButton`, simplifying its structure by removing the unnecessary React Fragment (`<>`).
+*   **Objective**: Replace the simple click-to-fullscreen functionality on the manga thumbnail with a context menu.
+*   **Behavior to Mirror**: The context menu should be triggered by a long-press on the thumbnail or a click on a new three-dot options button, mimicking the behavior of the `MangaGridCard` component in the library.
+*   **Initial Bug**: The first implementation attempt resulted in a "Maximum update depth exceeded" React error. This was caused by a Rules of Hooks violation related to the `material-ui-popup-state` library.
+*   **Resolution**: The component was refactored to remove the `material-ui-popup-state` dependency and manage the menu's state using standard React hooks (`useState`), which resolved the infinite loop.
 
-### `Suwayomi-WebUI/src/modules/manga/components/details/Thumbnail.tsx`
-*   **Hover State Management:**
-    *   Introduced a new state variable: `const [isHovered, setIsHovered] = useState(false);` to track the hover state of the manga card.
-    *   Added `onMouseEnter={() => setIsHovered(true)}` and `onMouseLeave={() => setIsHovered(false)}` event handlers to the main `Stack` component, making the 3-dot button visible only on hover.
-*   **Direct Full-screen Modal Trigger:**
-    *   Modified the `onContextMenu` handler (and the `longPressEvent` binding implicitly) to directly call `popupState.open()` instead of `thumbnailMenuPopupState.open()`, thus eliminating the redundant two-step "Expand" action.
-*   **Removed Redundant Context Menu State:** The `thumbnailMenuPopupState` (e.g., `const thumbnailMenuPopupState = usePopupState(...)`) and its associated `Menu` and `MenuItem` components were removed, as the direct `popupState` is now used for the context menu.
-*   **Conditional Rendering of `ThumbnailOptionButton`:** The `ThumbnailOptionButton` is now rendered conditionally based on `isImageReady` AND `isHovered`, ensuring it only appears when the image is loaded and the user hovers over the card. The `manga` prop was also removed from this component call.
+## 2. Iterative Debugging: Button Visibility
 
-## Next Steps
-*   Verify implemented changes in the browser.
+After fixing the initial crash, a series of UI bugs appeared related to the visibility of the three-dot options button.
+
+*   **Problem**: The options button would disappear when the menu was opened, because its visibility was tied only to the parent's `:hover` state. When the menu appeared, the hover was lost, the button vanished, and the menu's anchor became invalid. This also caused the long-press to fail intermittently.
+*   **Solution**: The button's visibility logic was corrected. It was made dependent on two conditions: the CSS `:hover` state *and* the menu's open state (`isMenuOpen`). This required modifying both `ThumbnailOptionButton.tsx` (to remove its internal visibility styles) and `Thumbnail.tsx` (to add the conditional visibility logic), ensuring the button remained a stable anchor when the menu was active.
+
+## 3. Final Refinement: Long-Press & Ripple Animation
+
+Even with the visibility fixed, the long-press behavior was still incorrect.
+
+*   **Problem 1 (Long-Press)**: The long-press was not triggering the menu correctly. The menu would only appear on mouse release, not after the specified duration. Furthermore, the menu was incorrectly anchored to the thumbnail itself, not the three-dot button.
+*   **Problem 2 (Ripple Animation)**: The ripple effect on the thumbnail continued for the entire duration of the long-press, which did not match the subtle, shorter animation of the reference component.
+*   **Problem 3 (Click Behavior)**: A regular (short) click on the thumbnail was incorrectly opening the menu.
+
+### Root Cause & Definitive Solution
+
+A deep comparison with the reference `MangaGridCard.tsx` component revealed the root cause: an architectural conflict between the `use-long-press` library and Material-UI's `CardActionArea`.
+
+*   **The Fix**:
+    1.  **Event Handler Isolation**: The `CardActionArea` was wrapped in a `div`, and the `use-long-press` event listeners were moved to this new wrapper. This isolated the library's event handling from the `CardActionArea`'s internal logic.
+    2.  **Programmatic Click**: The `useLongPress` callback was changed to programmatically dispatch a `click` event on the three-dot button (`optionButtonRef.current?.click()`). This ensures the menu is always triggered by and anchored to the correct element.
+    3.  **Ripple Control**: A new state variable (`isLongPressing`) was introduced. Using the `onStart` and `onCancel` callbacks from `use-long-press`, this state is used to conditionally disable the `CardActionArea`'s ripple effect (`disableRipple={isLongPressing}`) during a long-press.
+    4.  **Removed Incorrect Click**: The `onClick` handler was removed from the thumbnail area, so a short click no longer has any effect.
+
+This final, comprehensive refactor was intended to resolve all outstanding issues. However, the long-press functionality still fails to trigger the context menu, indicating a deeper, unresolved issue in the event handling logic. The task is ongoing.
