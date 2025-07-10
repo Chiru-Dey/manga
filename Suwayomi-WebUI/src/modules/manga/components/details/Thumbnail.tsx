@@ -158,9 +158,6 @@ export const Thumbnail = ({
             >
                 <CardActionArea
                     {...longPressEvent}
-                    onContextMenu={(e: MouseEvent<HTMLElement>) => {
-                        e.preventDefault();
-                    }}
                     sx={{
                         height: '100%',
                         width: '100%',
