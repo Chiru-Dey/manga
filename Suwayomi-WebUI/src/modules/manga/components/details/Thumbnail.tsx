@@ -16,7 +16,7 @@ import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
 
-import { useMemo, useLayoutEffect, useState } from 'react';
+import { useMemo, useLayoutEffect, useState, useRef } from 'react';
 import { Stack, Menu } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { MangaActionMenuItems } from '@/modules/manga/components/MangaActionMenuItems.tsx';
@@ -31,6 +31,8 @@ export const Thumbnail = ({
 }) => {
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
+    const setDynamicColorRef = useRef(setDynamicColor);
+    setDynamicColorRef.current = setDynamicColor;
 
     const thumbnailUrl = useMemo(() => {
         try {
@@ -71,7 +73,7 @@ export const Thumbnail = ({
         let isMounted = true;
 
         if (!shouldProcessDynamicColor || !thumbnailUrl) {
-            setDynamicColor(null);
+            setDynamicColorRef.current(null);
             return undefined;
         }
 
@@ -104,7 +106,7 @@ export const Thumbnail = ({
                 ) {
                     // If palette is incomplete, don't set dynamic colors
                     if (isMounted) {
-                        setDynamicColor(null);
+                        setDynamicColorRef.current(null);
                     }
                     return;
                 }
@@ -115,12 +117,12 @@ export const Thumbnail = ({
                 } as TAppThemeContext['dynamicColor'];
 
                 if (isMounted) {
-                    setDynamicColor(newColors);
+                    setDynamicColorRef.current(newColors);
                 }
             } catch (error) {
                 console.error("Error processing image colors:", error);
                 if (isMounted) {
-                    setDynamicColor(null); // Reset on error
+                    setDynamicColorRef.current(null); // Reset on error
                 }
             }
         };
@@ -129,15 +131,15 @@ export const Thumbnail = ({
         img.onerror = () => {
             console.error("Failed to load image for color extraction.");
             if (isMounted) {
-                setDynamicColor(null);
+                setDynamicColorRef.current(null);
             }
         };
 
         return () => {
             isMounted = false;
-            setDynamicColor(null); // Ensure cleanup
+            setDynamicColorRef.current(null); // Ensure cleanup
         };
-    }, [shouldProcessDynamicColor, thumbnailUrl, setDynamicColor]);
+    }, [shouldProcessDynamicColor, thumbnailUrl]);
 
     if (!thumbnailUrl) return null;
 
