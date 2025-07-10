@@ -14,11 +14,10 @@ import { forwardRef } from 'react';
 
 type Props = {
     popupState: PopupState;
-    visible: boolean;
 } & ButtonProps;
 
 export const ThumbnailOptionButton = forwardRef<HTMLButtonElement, Props>(
-    ({ popupState, visible, ...props }, ref) => {
+    ({ popupState, ...props }, ref) => {
         return (
             <Button
                 ref={ref}
@@ -29,8 +28,8 @@ export const ThumbnailOptionButton = forwardRef<HTMLButtonElement, Props>(
                     position: 'absolute',
                     top: (theme) => theme.spacing(0.5),
                     right: (theme) => theme.spacing(0.5),
-                    visibility: visible ? 'visible' : 'hidden',
-                    pointerEvents: visible ? 'all' : 'none',
+                    visibility: 'hidden',
+                    pointerEvents: 'none',
                     minWidth: 'unset',
                     paddingX: '0',
                     paddingY: '2.5px',

@@ -36,7 +36,6 @@ export const Thumbnail = ({
     const optionButtonRef = useRef<HTMLButtonElement>(null);
 
     const [isImageReady, setIsImageReady] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const thumbnailUrl = useMemo(() => {
@@ -124,12 +123,19 @@ export const Thumbnail = ({
                                 [theme.breakpoints.up('xl')]: {
                                     width: '300px',
                                 },
+                                '@media (hover: hover) and (pointer: fine)': {
+                                    '&:hover .manga-option-button': {
+                                        visibility: 'visible',
+                                        pointerEvents: 'all',
+                                    },
+                                    '&:hover .hover-overlay': {
+                                        opacity: 1,
+                                    },
+                                },
                             }}
                         >
                             <CardActionArea
                                 {...longPressEvent}
-                                onMouseEnter={() => setIsHovered(true)}
-                                onMouseLeave={() => setIsHovered(false)}
                                 onContextMenu={(e) => e.preventDefault()}
                                 sx={{
                                     height: '100%',
@@ -137,12 +143,13 @@ export const Thumbnail = ({
                                 }}
                             >
                                 <div
+                                    className="hover-overlay"
                                     style={{
                                         position: 'absolute',
                                         inset: 0,
                                         pointerEvents: 'none',
                                         background: 'rgba(0,0,0,0.3)',
-                                        opacity: isHovered ? 1 : 0,
+                                        opacity: 0,
                                         transition: 'opacity 200ms',
                                         zIndex: 0,
                                     }}
@@ -157,8 +164,14 @@ export const Thumbnail = ({
                             <ThumbnailOptionButton
                                 ref={optionButtonRef}
                                 popupState={popupState}
-                                visible={isHovered && isImageReady}
-                                onClick={(e) => e.preventDefault()}
+                                sx={{
+                                    visibility: popupState.isOpen || !isImageReady ? 'hidden' : 'visible',
+                                    pointerEvents: popupState.isOpen || !isImageReady ? 'none' : 'all',
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
                             />
                             <Menu {...bindMenu(popupState)}>
                                 {(onClose) => (
