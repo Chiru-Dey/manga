@@ -156,31 +156,32 @@ export const Thumbnail = ({
                     },
                 }}
             >
-                <CardActionArea
-                    {...longPressEvent}
-                    sx={{
-                        height: '100%',
-                        width: '100%',
-                    }}
-                >
-                    <div
-                        className="hover-overlay"
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            pointerEvents: 'none',
-                            background: 'rgba(0,0,0,0.3)',
-                            opacity: 0,
-                            transition: 'opacity 200ms',
-                            zIndex: 0,
+                <div {...longPressEvent} onClick={(e) => handleMenuClick(e)}>
+                    <CardActionArea
+                        sx={{
+                            height: '100%',
+                            width: '100%',
                         }}
-                    />
-                    <SpinnerImage
-                        src={thumbnailUrl}
-                        alt="Manga Thumbnail"
-                        imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-                </CardActionArea>
+                    >
+                        <div
+                            className="hover-overlay"
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                pointerEvents: 'none',
+                                background: 'rgba(0,0,0,0.3)',
+                                opacity: 0,
+                                transition: 'opacity 200ms',
+                                zIndex: 0,
+                            }}
+                        />
+                        <SpinnerImage
+                            src={thumbnailUrl}
+                            alt="Manga Thumbnail"
+                            imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                    </CardActionArea>
+                </div>
                 <ThumbnailOptionButton
                     ref={optionButtonRef}
                     onClick={handleMenuClick}
