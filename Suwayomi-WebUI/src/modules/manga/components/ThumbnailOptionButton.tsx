@@ -7,26 +7,35 @@
  */
 
 import IconButton from '@mui/material/IconButton';
-import { usePopupState, bindTrigger } from 'material-ui-popup-state/hooks';
+import { usePopupState, bindTrigger, bindMenu } from 'material-ui-popup-state/hooks';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useTheme } from '@mui/material/styles';
 
 export interface ThumbnailOptionButtonProps {
     popupState: ReturnType<typeof usePopupState>;
 }
 
-export const ThumbnailOptionButton = ({ popupState }: ThumbnailOptionButtonProps) => (
-    <IconButton
-        {...bindTrigger(popupState)}
-        sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            zIndex: 1,
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            color: 'white',
-            '&:hover': { backgroundColor: 'rgba(0,0,0,0.8)' },
-        }}
-    >
-        <MoreVertIcon />
-    </IconButton>
-);
+export const ThumbnailOptionButton = ({ popupState }: ThumbnailOptionButtonProps) => {
+    const theme = useTheme();
+
+    return (
+        <IconButton
+            {...bindTrigger(popupState)}
+            {...bindMenu(popupState)}
+            sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                zIndex: 1,
+                width: 24,
+                height: 48,
+                borderRadius: 2,
+                backgroundColor: theme.palette.background.paper,
+                color: theme.palette.text.primary,
+                '&:hover': { backgroundColor: theme.palette.action.hover },
+            }}
+        >
+            <MoreVertIcon />
+        </IconButton>
+    );
+};

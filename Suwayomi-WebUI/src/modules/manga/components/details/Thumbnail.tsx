@@ -10,7 +10,9 @@ import { useTheme } from '@mui/material/styles';
 import { useLayoutEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
-import { bindPopover, usePopupState } from 'material-ui-popup-state/hooks'; // Removed bindTrigger
+import { bindMenu, bindTrigger, usePopupState } from 'material-ui-popup-state/hooks';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { Vibrant } from 'node-vibrant/browser';
 import { FastAverageColor } from 'fast-average-color';
 import { useLongPress } from 'use-long-press';
@@ -31,14 +33,15 @@ export const Thumbnail = ({
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
 
-    const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-fullscreen' });
+    const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-options' });
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [isImageReady, setIsImageReady] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
     const longPressEvent = useLongPress(
-        () => {
-            popupState.open();
+        (event) => {
+            popupState.open(event);
         },
         {
             threshold: 600,
@@ -99,7 +102,7 @@ export const Thumbnail = ({
                 onMouseLeave={() => setIsHovered(false)}
                 onContextMenu={(e: React.MouseEvent) => {
                     e.preventDefault();
-                    popupState.open();
+                    popupState.open(e);
                 }}
                 sx={{
                     position: 'relative',
@@ -145,9 +148,19 @@ export const Thumbnail = ({
                 )}
                 {isImageReady && isHovered && <ThumbnailOptionButton popupState={popupState} />}
             </Stack>
-            <Modal {...bindPopover(popupState)} sx={{ outline: 0 }}>
+            <Menu {...bindMenu(popupState)}>
+                <MenuItem
+                    onClick={() => {
+                        setIsModalOpen(true);
+                        popupState.close();
+                    }}
+                >
+                    Expand
+                </MenuItem>
+            </Menu>
+            <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} sx={{ outline: 0 }}>
                 <Stack
-                    onClick={() => popupState.close()}
+                    onClick={() => setIsModalOpen(false)}
                     sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
                 >
                     <SpinnerImage
