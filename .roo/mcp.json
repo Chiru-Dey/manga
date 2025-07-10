@@ -51,29 +51,6 @@
       ],
       "disabled": false
     },
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/home/user/manga/"
-      ],
-      "disabled": false,
-      "alwaysAllow": [
-        "read_file",
-        "read_multiple_files",
-        "write_file",
-        "edit_file",
-        "create_directory",
-        "list_directory",
-        "list_directory_with_sizes",
-        "directory_tree",
-        "move_file",
-        "list_allowed_directories",
-        "get_file_info",
-        "search_files"
-      ]
-    },
     "sequentialthinking": {
       "command": "npx",
       "args": [
@@ -133,6 +110,28 @@
         "browserbase_navigate_back"
       ],
       "disabled": false
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/chiru/manga/"
+      ],
+      "alwaysAllow": [
+        "read_file",
+        "read_multiple_files",
+        "write_file",
+        "edit_file",
+        "create_directory",
+        "list_directory",
+        "list_allowed_directories",
+        "get_file_info",
+        "list_directory_with_sizes",
+        "directory_tree",
+        "search_files",
+        "move_file"
+      ]
     }
   }
 }
