@@ -42,6 +42,7 @@ export const Thumbnail = ({
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [isLongPressing, setIsLongPressing] = useState(false);
     const isMenuOpen = Boolean(anchorEl);
 
     const thumbnailUrl = useMemo(() => {
@@ -60,13 +61,13 @@ export const Thumbnail = ({
 
     const longPressEvent = useLongPress(
         () => {
-            if (optionButtonRef.current) {
-                handleMenuClick({
-                    currentTarget: optionButtonRef.current,
-                } as unknown as MouseEvent<HTMLElement>);
-            }
+            optionButtonRef.current?.click();
         },
-        { threshold: 600 },
+        {
+            onStart: () => setIsLongPressing(true),
+            onCancel: () => setIsLongPressing(false),
+            threshold: 600,
+        },
     );
 
     useLayoutEffect(() => {
@@ -156,8 +157,9 @@ export const Thumbnail = ({
                     },
                 }}
             >
-                <div {...longPressEvent} onClick={(e) => handleMenuClick(e)}>
+                <div {...longPressEvent}>
                     <CardActionArea
+                        disableRipple={isLongPressing}
                         sx={{
                             height: '100%',
                             width: '100%',
