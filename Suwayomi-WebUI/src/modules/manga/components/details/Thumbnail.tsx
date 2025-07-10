@@ -6,6 +6,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import React, { useLayoutEffect, useState, useMemo } from 'react';
 import Modal from '@mui/material/Modal';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -14,7 +15,6 @@ import { useTheme } from '@mui/material/styles';
 import { FastAverageColor } from 'fast-average-color';
 import { bindMenu, usePopupState } from 'material-ui-popup-state/hooks';
 import { Vibrant } from 'node-vibrant/browser';
-import { useLayoutEffect, useState } from 'react';
 import { useLongPress } from 'use-long-press';
 import { SpinnerImage } from '@/modules/core/components/SpinnerImage.tsx';
 import { MANGA_COVER_ASPECT_RATIO } from '@/modules/manga/Manga.constants.ts';
@@ -22,9 +22,6 @@ import { MangaIdInfo, MangaThumbnailInfo } from '@/modules/manga/Manga.types.ts'
 import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
-
-const isValidManga = (manga: Partial<MangaThumbnailInfo & MangaIdInfo>): manga is MangaThumbnailInfo & MangaIdInfo =>
-    'id' in manga && 'coverUrl' in manga;
 
 export const Thumbnail = ({
     manga,
@@ -36,17 +33,18 @@ export const Thumbnail = ({
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
 
-    // Ensure manga has required properties
-    if (!isValidManga(manga)) {
-        return null; // Or render a placeholder/error state
-    }
+    const thumbnailUrl = useMemo(() => {
+        try {
+            return Mangas.getThumbnailUrl(manga);
+        } catch {
+            return '';
+        }
+    }, [manga]);
 
-    // Now TypeScript knows manga.id and manga.coverUrl are defined
-    const thumbnailUrl = Mangas.getThumbnailUrl(manga as MangaThumbnailInfo & MangaIdInfo);
+    const shouldProcessDynamicColor = mangaDynamicColorSchemes && thumbnailUrl;
 
     const popupState = usePopupState({ variant: 'popover', popupId: 'manga-thumbnail-options' });
     const [isModalOpen, setIsModalOpen] = useState(false);
-
     const [isImageReady, setIsImageReady] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -54,64 +52,67 @@ export const Thumbnail = ({
         (event) => {
             popupState.open(event);
         },
-        {
-            threshold: 600,
-        },
+        { threshold: 600 },
     );
+
+    const processImageColors = async (image: HTMLImageElement) => {
+        const isLargeImage = image.width > 600 && image.height > 600;
+        const [palette, averageColor] = await Promise.all([
+            Vibrant.from(image).getPalette(),
+            new FastAverageColor().getColor(image, {
+                algorithm: 'dominant',
+                mode: isLargeImage ? 'speed' : 'precision',
+                ignoredColor: [
+                    [255, 255, 255, 255, 75],
+                    [0, 0, 0, 255, 75],
+                ],
+            }),
+        ]);
+
+        if (
+            !palette.Vibrant ||
+            !palette.DarkVibrant ||
+            !palette.LightVibrant ||
+            !palette.LightMuted ||
+            !palette.Muted ||
+            !palette.DarkMuted
+        ) {
+            return null;
+        }
+
+        return {
+            ...palette,
+            average: averageColor,
+        } as TAppThemeContext['dynamicColor'];
+    };
 
     useLayoutEffect(() => {
         let isMounted = true;
 
-        if (!mangaDynamicColorSchemes) {
+        if (!shouldProcessDynamicColor || !thumbnailUrl) {
             setDynamicColor(null);
             return undefined;
         }
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = thumbnailUrl; // Use the guaranteed thumbnailUrl
+        img.src = thumbnailUrl;
 
-        img.onload = () => {
+        img.onload = async () => {
             if (!isMounted) return;
-
-            const isLargeImage = img.width > 600 && img.height > 600;
-
-            Promise.all([
-                Vibrant.from(img).getPalette(),
-                new FastAverageColor().getColor(img, {
-                    algorithm: 'dominant',
-                    mode: isLargeImage ? 'speed' : 'precision',
-                    ignoredColor: [
-                        [255, 255, 255, 255, 75],
-                        [0, 0, 0, 255, 75],
-                    ],
-                }),
-            ]).then(([palette, averageColor]) => {
-                if (!isMounted) return;
-
-                if (
-                    !palette.Vibrant ||
-                    !palette.DarkVibrant ||
-                    !palette.LightVibrant ||
-                    !palette.LightMuted ||
-                    !palette.Muted ||
-                    !palette.DarkMuted
-                ) {
-                    return;
-                }
-
-                setDynamicColor({
-                    ...palette,
-                    average: averageColor,
-                } as TAppThemeContext['dynamicColor']);
-            });
+            const colors = await processImageColors(img);
+            if (isMounted && colors) {
+                setDynamicColor(colors);
+            }
         };
 
         return () => {
             isMounted = false;
             setDynamicColor(null);
         };
-    }, [mangaDynamicColorSchemes, manga.id, thumbnailUrl, setDynamicColor]); // Use thumbnailUrl in dependencies
+    }, [shouldProcessDynamicColor, thumbnailUrl, setDynamicColor]);
+
+    if (!thumbnailUrl) return null;
 
     return (
         <>
@@ -142,7 +143,7 @@ export const Thumbnail = ({
                 }}
             >
                 <SpinnerImage
-                    src={thumbnailUrl} // Use the guaranteed thumbnailUrl
+                    src={thumbnailUrl}
                     alt="Manga Thumbnail"
                     onLoad={() => setIsImageReady(true)}
                     imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -165,7 +166,7 @@ export const Thumbnail = ({
                     sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
                 >
                     <SpinnerImage
-                        src={thumbnailUrl} // Use the guaranteed thumbnailUrl
+                        src={thumbnailUrl}
                         alt="Manga Thumbnail"
                         imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
                     />
