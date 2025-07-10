@@ -13,7 +13,7 @@
         "resolve-library-id",
         "get-library-docs"
       ],
-      "disabled": true
+      "disabled": false
     },
     "puppeteer": {
       "command": "npx",
@@ -33,7 +33,7 @@
       "disabledTools": [
         "puppeteer_navigate"
       ],
-      "disabled": true
+      "disabled": false
     },
     "memory": {
       "command": "npx",
@@ -45,13 +45,11 @@
         "create_entities",
         "create_relations",
         "add_observations",
-        "delete_entities",
         "open_nodes",
         "search_nodes",
-        "read_graph",
-        "delete_relations"
+        "read_graph"
       ],
-      "disabled": true
+      "disabled": false
     },
     "filesystem": {
       "command": "npx",
@@ -85,7 +83,7 @@
       "alwaysAllow": [
         "sequentialthinking"
       ],
-      "disabled": true
+      "disabled": false
     },
     "tavily": {
       "command": "npx",
@@ -102,7 +100,7 @@
         "tavily-map",
         "tavily-crawl"
       ],
-      "disabled": true
+      "disabled": false
     },
     "browserbase": {
       "command": "npx",
@@ -134,7 +132,7 @@
         "browserbase_navigate_forward",
         "browserbase_navigate_back"
       ],
-      "disabled": true
+      "disabled": false
     }
   }
 }
