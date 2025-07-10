@@ -7,7 +7,7 @@
  */
 
 import MoreVert from '@mui/icons-material/MoreVert';
-import { IconButton, IconButtonProps } from '@mui/material';
+import { Button, ButtonProps } from '@mui/material';
 import { PopupState } from 'material-ui-popup-state/hooks';
 import { bindToggle } from 'material-ui-popup-state';
 import { forwardRef } from 'react';
@@ -15,28 +15,31 @@ import { forwardRef } from 'react';
 type Props = {
     popupState: PopupState;
     visible: boolean;
-} & IconButtonProps;
+} & ButtonProps;
 
 export const ThumbnailOptionButton = forwardRef<HTMLButtonElement, Props>(
     ({ popupState, visible, ...props }, ref) => {
         return (
-            <IconButton
+            <Button
                 ref={ref}
                 {...bindToggle(popupState)}
                 {...props}
+                variant="contained"
                 sx={{
                     position: 'absolute',
                     top: (theme) => theme.spacing(0.5),
                     right: (theme) => theme.spacing(0.5),
-                    color: 'white',
                     visibility: visible ? 'visible' : 'hidden',
                     pointerEvents: visible ? 'all' : 'none',
+                    minWidth: 'unset',
+                    paddingX: '0',
+                    paddingY: '2.5px',
                     ...props.sx,
                 }}
                 className="manga-option-button"
             >
                 <MoreVert />
-            </IconButton>
+            </Button>
         );
     },
 );

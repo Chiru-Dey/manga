@@ -8,7 +8,7 @@
 
 import { useTheme } from '@mui/material/styles';
 import { useLayoutEffect, useState, useMemo, useRef } from 'react';
-import { Stack, Modal } from '@mui/material';
+import { Stack, Modal, CardActionArea } from '@mui/material';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import PopupState, { bindMenu } from 'material-ui-popup-state';
 import { Vibrant } from 'node-vibrant/browser';
@@ -107,32 +107,33 @@ export const Thumbnail = ({
                     );
 
                     return (
-                        <>
-                            <Stack
+                        <Stack
+                            sx={{
+                                position: 'relative',
+                                borderRadius: 1,
+                                overflow: 'hidden',
+                                backgroundColor: 'background.paper',
+                                width: '150px',
+                                maxHeight: 'fit-content',
+                                aspectRatio: MANGA_COVER_ASPECT_RATIO,
+                                flexShrink: 0,
+                                flexGrow: 0,
+                                [theme.breakpoints.up('lg')]: {
+                                    width: '200px',
+                                },
+                                [theme.breakpoints.up('xl')]: {
+                                    width: '300px',
+                                },
+                            }}
+                        >
+                            <CardActionArea
                                 {...longPressEvent}
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
-                                onContextMenu={(e: React.MouseEvent) => {
-                                    e.preventDefault();
-                                    popupState.open(e);
-                                }}
+                                onContextMenu={(e) => e.preventDefault()}
                                 sx={{
-                                    position: 'relative',
-                                    borderRadius: 1,
-                                    overflow: 'hidden',
-                                    backgroundColor: 'background.paper',
-                                    width: '150px',
-                                    maxHeight: 'fit-content',
-                                    aspectRatio: MANGA_COVER_ASPECT_RATIO,
-                                    flexShrink: 0,
-                                    flexGrow: 0,
-                                    [theme.breakpoints.up('lg')]: {
-                                        width: '200px',
-                                    },
-                                    [theme.breakpoints.up('xl')]: {
-                                        width: '300px',
-                                    },
-                                    cursor: 'pointer',
+                                    height: '100%',
+                                    width: '100%',
                                 }}
                             >
                                 <div
@@ -152,25 +153,26 @@ export const Thumbnail = ({
                                     onLoad={() => setIsImageReady(true)}
                                     imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                 />
-                                <ThumbnailOptionButton
-                                    ref={optionButtonRef}
-                                    popupState={popupState}
-                                    visible={isHovered && isImageReady}
-                                />
-                                <Menu {...bindMenu(popupState)}>
-                                    {(onClose) => (
-                                        <MenuItem
-                                            onClick={() => {
-                                                setIsModalOpen(true);
-                                                onClose();
-                                            }}
-                                            Icon={OpenInFullIcon}
-                                            title="Expand"
-                                        />
-                                    )}
-                                </Menu>
-                            </Stack>
-                        </>
+                            </CardActionArea>
+                            <ThumbnailOptionButton
+                                ref={optionButtonRef}
+                                popupState={popupState}
+                                visible={isHovered && isImageReady}
+                                onClick={(e) => e.preventDefault()}
+                            />
+                            <Menu {...bindMenu(popupState)}>
+                                {(onClose) => (
+                                    <MenuItem
+                                        onClick={() => {
+                                            setIsModalOpen(true);
+                                            onClose();
+                                        }}
+                                        Icon={OpenInFullIcon}
+                                        title="Expand"
+                                    />
+                                )}
+                            </Menu>
+                        </Stack>
                     );
                 }}
             </PopupState>
