@@ -60,6 +60,8 @@ import {
     MenuItem as MuiMenuItem,
     Modal,
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
 const DetailsWrapper = styled('div')(({ theme }) => ({
@@ -323,12 +325,18 @@ export const MangaDetails = ({
                                                             onClick={() => {
                                                             }}
                                                         >
+                                                            <ListItemIcon>
+                                                                <EditIcon fontSize="small" />
+                                                            </ListItemIcon>
                                                             <ListItemText>Change Thumbnail</ListItemText>
                                                         </MuiMenuItem>
                                                         <MuiMenuItem
                                                             onClick={() => {
                                                             }}
                                                         >
+                                                            <ListItemIcon>
+                                                                <RestartAltIcon fontSize="small" />
+                                                            </ListItemIcon>
                                                             <ListItemText>Reset Thumbnail</ListItemText>
                                                         </MuiMenuItem>
                                                     </>
