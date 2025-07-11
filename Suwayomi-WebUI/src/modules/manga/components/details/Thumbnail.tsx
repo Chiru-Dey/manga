@@ -12,6 +12,7 @@ import { Stack, CardActionArea } from '@mui/material';
 import { Vibrant } from 'node-vibrant/browser';
 import { FastAverageColor } from 'fast-average-color';
 import { LongPressCallback } from 'use-long-press';
+import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 import { PopupState } from 'material-ui-popup-state/hooks';
 
 import { Mangas } from '@/modules/manga/services/Mangas.ts';
@@ -34,6 +35,7 @@ export const Thumbnail = ({
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
     const anchorRef = useRef<HTMLDivElement>(null);
+    const optionButtonRef = useRef<HTMLButtonElement>(null);
 
     const thumbnailUrl = useMemo(() => {
         try {
@@ -118,8 +120,7 @@ export const Thumbnail = ({
             }}
         >
             <CardActionArea
-                {...longPressEvent(() => popupState.open(anchorRef.current))}
-                onClick={(e) => popupState.open(e)}
+                {...longPressEvent(() => popupState.open(optionButtonRef.current))}
                 disableRipple={popupState.isOpen}
                 sx={{
                     height: '100%',
@@ -144,6 +145,7 @@ export const Thumbnail = ({
                     imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
             </CardActionArea>
+            <ThumbnailOptionButton ref={optionButtonRef} popupState={popupState} />
         </Stack>
     );
 };

@@ -215,7 +215,20 @@ export const MangaDetails = ({
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const longPressEvent = useLongPress(null);
+    const longPressEvent = useLongPress(
+        (e, { context }) => {
+            if (typeof context === 'function') {
+                context(e);
+            }
+        },
+        {
+            onStart: (e, { context }) => {
+                if (typeof context === 'function') {
+                    context(e);
+                }
+            },
+        },
+    );
 
     useEffect(() => {
         if (!manga.source) {
