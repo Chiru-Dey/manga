@@ -7,43 +7,33 @@
  */
 
 import { useTheme } from '@mui/material/styles';
-import { useLayoutEffect, useState, useMemo, useRef, MouseEvent } from 'react';
-import {
-    Stack,
-    Modal,
-    CardActionArea,
-    Menu as MuiMenu,
-    MenuItem as MuiMenuItem,
-    ListItemIcon,
-    ListItemText,
-} from '@mui/material';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import { useLayoutEffect, useMemo, useRef } from 'react';
+import { Stack, CardActionArea } from '@mui/material';
 import { Vibrant } from 'node-vibrant/browser';
 import { FastAverageColor } from 'fast-average-color';
-import { useLongPress } from 'use-long-press';
+import { LongPressCallback } from 'use-long-press';
+import { PopupState } from 'material-ui-popup-state/hooks';
 
 import { Mangas } from '@/modules/manga/services/Mangas.ts';
 import { SpinnerImage } from '@/modules/core/components/SpinnerImage.tsx';
 import { MANGA_COVER_ASPECT_RATIO } from '@/modules/manga/Manga.constants.ts';
 import { MangaIdInfo, MangaThumbnailInfo } from '@/modules/manga/Manga.types.ts';
 import { TAppThemeContext, useAppThemeContext } from '@/modules/theme/contexts/AppThemeContext.tsx';
-import { ThumbnailOptionButton } from '@/modules/manga/components/ThumbnailOptionButton.tsx';
 
 export const Thumbnail = ({
     manga,
     mangaDynamicColorSchemes,
+    popupState,
+    longPressEvent,
 }: {
     manga: Partial<MangaThumbnailInfo & MangaIdInfo>;
     mangaDynamicColorSchemes: boolean;
+    popupState: PopupState;
+    longPressEvent: (callback: LongPressCallback | null, options?: import("use-long-press").LongPressOptions) => import("react").DOMAttributes<Element>;
 }) => {
     const theme = useTheme();
     const { setDynamicColor } = useAppThemeContext();
-    const optionButtonRef = useRef<HTMLButtonElement>(null);
-
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [isLongPressing, setIsLongPressing] = useState(false);
-    const isMenuOpen = Boolean(anchorEl);
+    const anchorRef = useRef<HTMLDivElement>(null);
 
     const thumbnailUrl = useMemo(() => {
         try {
@@ -52,23 +42,6 @@ export const Thumbnail = ({
             return '';
         }
     }, [manga]);
-
-    const handleMenuClick = (event: MouseEvent<HTMLElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setAnchorEl(event.currentTarget);
-    };
-
-    const longPressEvent = useLongPress(
-        () => {
-            optionButtonRef.current?.click();
-        },
-        {
-            onStart: () => setIsLongPressing(true),
-            onCancel: () => setIsLongPressing(false),
-            threshold: 600,
-        },
-    );
 
     useLayoutEffect(() => {
         if (!mangaDynamicColorSchemes) {
@@ -116,103 +89,61 @@ export const Thumbnail = ({
         };
     }, []);
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-
-    const handleExpandClick = () => {
-        setIsModalOpen(true);
-        handleMenuClose();
-    };
-
     if (!thumbnailUrl) return null;
 
     return (
-        <>
-            <Stack
+        <Stack
+            ref={anchorRef}
+            sx={{
+                position: 'relative',
+                borderRadius: 1,
+                overflow: 'hidden',
+                backgroundColor: 'background.paper',
+                width: '150px',
+                maxHeight: 'fit-content',
+                aspectRatio: MANGA_COVER_ASPECT_RATIO,
+                flexShrink: 0,
+                flexGrow: 0,
+                [theme.breakpoints.up('lg')]: {
+                    width: '200px',
+                },
+                [theme.breakpoints.up('xl')]: {
+                    width: '300px',
+                },
+                '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover .hover-overlay': {
+                        opacity: 1,
+                    },
+                },
+            }}
+        >
+            <CardActionArea
+                {...longPressEvent(() => popupState.open(anchorRef.current))}
+                onClick={(e) => popupState.open(e)}
+                disableRipple={popupState.isOpen}
                 sx={{
-                    position: 'relative',
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                    backgroundColor: 'background.paper',
-                    width: '150px',
-                    maxHeight: 'fit-content',
-                    aspectRatio: MANGA_COVER_ASPECT_RATIO,
-                    flexShrink: 0,
-                    flexGrow: 0,
-                    [theme.breakpoints.up('lg')]: {
-                        width: '200px',
-                    },
-                    [theme.breakpoints.up('xl')]: {
-                        width: '300px',
-                    },
-                    '@media (hover: hover) and (pointer: fine)': {
-                        '&:hover .manga-option-button': {
-                            visibility: 'visible',
-                            pointerEvents: 'all',
-                        },
-                        '&:hover .hover-overlay': {
-                            opacity: 1,
-                        },
-                    },
+                    height: '100%',
+                    width: '100%',
                 }}
             >
-                <div {...longPressEvent}>
-                    <CardActionArea
-                        disableRipple={isLongPressing}
-                        sx={{
-                            height: '100%',
-                            width: '100%',
-                        }}
-                    >
-                        <div
-                            className="hover-overlay"
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                pointerEvents: 'none',
-                                background: 'rgba(0,0,0,0.3)',
-                                opacity: 0,
-                                transition: 'opacity 200ms',
-                                zIndex: 0,
-                            }}
-                        />
-                        <SpinnerImage
-                            src={thumbnailUrl}
-                            alt="Manga Thumbnail"
-                            imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                        />
-                    </CardActionArea>
-                </div>
-                <ThumbnailOptionButton
-                    ref={optionButtonRef}
-                    onClick={handleMenuClick}
-                    sx={{
-                        visibility: isMenuOpen ? 'visible' : 'hidden',
-                        pointerEvents: isMenuOpen ? 'all' : 'none',
+                <div
+                    className="hover-overlay"
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none',
+                        background: 'rgba(0,0,0,0.3)',
+                        opacity: 0,
+                        transition: 'opacity 200ms',
+                        zIndex: 0,
                     }}
                 />
-                <MuiMenu anchorEl={anchorEl} open={isMenuOpen} onClose={handleMenuClose}>
-                    <MuiMenuItem onClick={handleExpandClick}>
-                        <ListItemIcon>
-                            <OpenInFullIcon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>Expand</ListItemText>
-                    </MuiMenuItem>
-                </MuiMenu>
-            </Stack>
-            <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} sx={{ outline: 0 }}>
-                <Stack
-                    onClick={() => setIsModalOpen(false)}
-                    sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
-                >
-                    <SpinnerImage
-                        src={thumbnailUrl}
-                        alt="Manga Thumbnail"
-                        imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
-                    />
-                </Stack>
-            </Modal>
-        </>
+                <SpinnerImage
+                    src={thumbnailUrl}
+                    alt="Manga Thumbnail"
+                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+            </CardActionArea>
+        </Stack>
     );
 };

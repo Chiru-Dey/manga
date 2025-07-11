@@ -9,8 +9,10 @@
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { styled } from '@mui/material/styles';
-import { ComponentProps, ReactNode, useEffect } from 'react';
+import { ComponentProps, ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import PopupState, { bindMenu } from 'material-ui-popup-state';
+import { useLongPress } from 'use-long-press';
 import { t as translate } from 'i18next';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
@@ -51,6 +53,14 @@ import { SourceIdInfo } from '@/modules/source/Source.types.ts';
 import { Thumbnail } from '@/modules/manga/components/details/Thumbnail.tsx';
 import { DescriptionGenre } from '@/modules/manga/components/details/DescriptionGenre.tsx';
 import { SearchLink } from '@/modules/manga/components/details/SearchLink.tsx';
+import { Menu } from '@/modules/core/components/menu/Menu.tsx';
+import {
+    ListItemIcon,
+    ListItemText,
+    MenuItem as MuiMenuItem,
+    Modal,
+} from '@mui/material';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 
 const DetailsWrapper = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -203,6 +213,10 @@ export const MangaDetails = ({
         settings: { mangaThumbnailBackdrop, mangaDynamicColorSchemes },
     } = useMetadataServerSettings();
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const longPressEvent = useLongPress(null);
+
     useEffect(() => {
         if (!manga.source) {
             makeToast(translate('source.error.label.source_not_found'), 'error');
@@ -224,44 +238,83 @@ export const MangaDetails = ({
         <>
             <DetailsWrapper>
                 <TopContentWrapper url={Mangas.getThumbnailUrl(manga)} mangaThumbnailBackdrop={mangaThumbnailBackdrop}>
-                    <ThumbnailMetadataWrapper>
-                        <Thumbnail manga={manga} mangaDynamicColorSchemes={mangaDynamicColorSchemes} />
-                        <MetadataContainer>
-                            <Stack sx={{ flexDirection: 'row', gap: 1, alignItems: 'flex-start', mb: 1 }}>
-                                <SearchLink query={manga.title} sourceId={manga.sourceId} mode="source.global-search">
-                                    <Typography variant="h5" component="h2" sx={{ wordBreak: 'break-word' }}>
-                                        {manga.title}
-                                    </Typography>
-                                </SearchLink>
-                                <CustomTooltip title={t('global.button.copy')}>
-                                    <IconButton onClick={copyTitle} color="inherit">
-                                        <ContentCopyIcon fontSize="small" />
-                                    </IconButton>
-                                </CustomTooltip>
-                            </Stack>
-                            {manga.author && (
-                                <Metadata
-                                    title={t('manga.label.author')}
-                                    value={valuesToJoinedSearchLinks(Mangas.getAuthors(manga), manga.source?.id, mode)}
-                                />
-                            )}
-                            {manga.artist && (
-                                <Metadata
-                                    title={t('manga.label.artist')}
-                                    value={valuesToJoinedSearchLinks(Mangas.getArtists(manga), manga.source?.id, mode)}
-                                />
-                            )}
-                            <Metadata
-                                title={t('manga.label.status')}
-                                value={t(MANGA_STATUS_TO_TRANSLATION[manga.status])}
-                            />
-                            <Metadata title={t('source.title_one')} value={getSourceName(manga.source)} />
-                        </MetadataContainer>
-                    </ThumbnailMetadataWrapper>
-                    <MangaButtonsContainer>
-                        <CustomButton
-                            size="medium"
-                            onClick={updateLibraryState}
+                    <PopupState variant="popover" popupId="thumbnail-action-menu">
+                        {(popupState) => (
+                            <>
+                                <ThumbnailMetadataWrapper>
+                                    <Thumbnail
+                                        manga={manga}
+                                        mangaDynamicColorSchemes={mangaDynamicColorSchemes}
+                                        popupState={popupState}
+                                       longPressEvent={longPressEvent}
+                                    />
+                                    <MetadataContainer>
+                                        <Stack sx={{ flexDirection: 'row', gap: 1, alignItems: 'flex-start', mb: 1 }}>
+                                            <SearchLink
+                                                query={manga.title}
+                                                sourceId={manga.sourceId}
+                                                mode="source.global-search"
+                                            >
+                                                <Typography variant="h5" component="h2" sx={{ wordBreak: 'break-word' }}>
+                                                    {manga.title}
+                                                </Typography>
+                                            </SearchLink>
+                                            <CustomTooltip title={t('global.button.copy')}>
+                                                <IconButton onClick={copyTitle} color="inherit">
+                                                    <ContentCopyIcon fontSize="small" />
+                                                </IconButton>
+                                            </CustomTooltip>
+                                        </Stack>
+                                                    {manga.author && (
+                                                        <Metadata
+                                                            title={t('manga.label.author')}
+                                                            value={valuesToJoinedSearchLinks(
+                                                                Mangas.getAuthors(manga),
+                                                                manga.source?.id,
+                                                                mode,
+                                                            )}
+                                                        />
+                                                    )}
+                                                    {manga.artist && (
+                                                        <Metadata
+                                                            title={t('manga.label.artist')}
+                                                            value={valuesToJoinedSearchLinks(
+                                                                Mangas.getArtists(manga),
+                                                                manga.source?.id,
+                                                                mode,
+                                                            )}
+                                                        />
+                                                    )}
+                                                    <Metadata
+                                                        title={t('manga.label.status')}
+                                                        value={t(MANGA_STATUS_TO_TRANSLATION[manga.status])}
+                                                    />
+                                                    <Metadata title={t('source.title_one')} value={getSourceName(manga.source)} />
+                                                </MetadataContainer>
+                                            </ThumbnailMetadataWrapper>
+                                            <Menu {...bindMenu(popupState)}>
+                                                {() => (
+                                                    <MuiMenuItem
+                                                        onClick={() => {
+                                                            popupState.close();
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <ListItemIcon>
+                                                            <OpenInFullIcon fontSize="small" />
+                                                        </ListItemIcon>
+                                                        <ListItemText>Expand</ListItemText>
+                                                    </MuiMenuItem>
+                                                )}
+                                            </Menu>
+                                        </>
+                                    )}
+                                </PopupState>
+                            </TopContentWrapper>
+                            <MangaButtonsContainer>
+                                <CustomButton
+                                    size="medium"
+                                    onClick={updateLibraryState}
                             variant={manga.inLibrary ? 'contained' : 'outlined'}
                         >
                             {manga.inLibrary ? <FavoriteIcon /> : <FavoriteBorderIcon />}
@@ -270,10 +323,21 @@ export const MangaDetails = ({
                         <TrackMangaButton manga={manga} />
                         <OpenSourceButton url={manga.realUrl} />
                     </MangaButtonsContainer>
-                </TopContentWrapper>
                 <DescriptionGenre manga={manga} mode={mode} />
             </DetailsWrapper>
             {CategorySelectComponent}
+            <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} sx={{ outline: 0 }}>
+                <Stack
+                    onClick={() => setIsModalOpen(false)}
+                    sx={{ height: '100vh', p: 2, outline: 0, justifyContent: 'center', alignItems: 'center' }}
+                >
+                    <SpinnerImage
+                        src={Mangas.getThumbnailUrl(manga)}
+                        alt="Manga Thumbnail"
+                        imgStyle={{ height: '100%', width: '100%', objectFit: 'contain' }}
+                    />
+                </Stack>
+            </Modal>
         </>
     );
 };
