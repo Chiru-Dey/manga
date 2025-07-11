@@ -107,13 +107,7 @@ echo "Release title: $RELEASE_TITLE"
 echo "Asset: $ZIP_FILE"
 
 # Clean up zip file if release was successful
-read -p "Release created successfully. Delete local zip file? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    rm "$ZIP_FILE"
-    echo "Local zip file deleted."
-else
-    echo "Local zip file kept: $ZIP_FILE"
-fi
+rm "$ZIP_FILE"
+echo "Local zip file deleted."
 
 echo "Release process completed!"
