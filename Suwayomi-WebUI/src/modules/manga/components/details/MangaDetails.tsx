@@ -307,17 +307,31 @@ export const MangaDetails = ({
                                             </ThumbnailMetadataWrapper>
                                             <Menu {...bindMenu(popupState)}>
                                                 {() => (
-                                                    <MuiMenuItem
-                                                        onClick={() => {
-                                                            popupState.close();
-                                                            setIsModalOpen(true);
-                                                        }}
-                                                    >
-                                                        <ListItemIcon>
-                                                            <OpenInFullIcon fontSize="small" />
-                                                        </ListItemIcon>
-                                                        <ListItemText>Expand</ListItemText>
-                                                    </MuiMenuItem>
+                                                    <>
+                                                        <MuiMenuItem
+                                                            onClick={() => {
+                                                                popupState.close();
+                                                                setIsModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <ListItemIcon>
+                                                                <OpenInFullIcon fontSize="small" />
+                                                            </ListItemIcon>
+                                                            <ListItemText>Expand</ListItemText>
+                                                        </MuiMenuItem>
+                                                        <MuiMenuItem
+                                                            onClick={() => {
+                                                            }}
+                                                        >
+                                                            <ListItemText>Change Thumbnail</ListItemText>
+                                                        </MuiMenuItem>
+                                                        <MuiMenuItem
+                                                            onClick={() => {
+                                                            }}
+                                                        >
+                                                            <ListItemText>Reset Thumbnail</ListItemText>
+                                                        </MuiMenuItem>
+                                                    </>
                                                 )}
                                             </Menu>
                                         </>
