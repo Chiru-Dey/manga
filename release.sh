@@ -51,8 +51,8 @@ echo "Created temporary directory: $TEMP_DIR"
 echo "Copying files to temporary directory..."
 cp -r "$CUSTOM_DATA_ROOT" "$TEMP_DIR/"
 cp "$SERVER_JAR_ABSOLUTE_PATH" "$TEMP_DIR/"
-cp "$RUN_SCRIPT_SH" "$TEMP_DIR/"
-cp "$RUN_SCRIPT_PS1" "$TEMP_DIR/"
+cp "$RUN_SCRIPT_SH" "$TEMP_DIR/run.sh"
+cp "$RUN_SCRIPT_PS1" "$TEMP_DIR/run.ps1"
 
 # Create zip file
 echo "Creating zip file: $ZIP_FILE"
@@ -106,7 +106,7 @@ echo "Release tag: $RELEASE_TAG"
 echo "Release title: $RELEASE_TITLE"
 echo "Asset: $ZIP_FILE"
 
-# Clean up zip file if release was successful
+# Clean up zip file after successful release
 rm "$ZIP_FILE"
 echo "Local zip file deleted."
 
